@@ -1,0 +1,598 @@
+<!-- student/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - DecipherInfoSec.</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+        .hero-gradient {
+            background: linear-gradient(90deg, #0c4a6e 0%, #0ea5e9 100%);
+        }
+    </style>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        },
+                        secondary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                            950: '#2e1065',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col bg-gray-50">
+<!-- Header -->
+<header class="bg-white shadow-md">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2">
+            <img src="../assets/images/logo.jpg" alt="DecipherInfoSec. Logo" width="150" height="20">
+            <span class="text-2xl font-bold text-primary-700">DecipherInfoSec.</span>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="hidden md:flex space-x-6">
+            <a href="../index.html" class="text-gray-700 hover:text-primary-600 font-medium">Home</a>
+            <a href="../pages/about.html" class="text-gray-700 hover:text-primary-600 font-medium">About Us</a>
+            <a href="/how-it-works" class="text-gray-700 hover:text-primary-600 font-medium">How It Works</a>
+            <a href="/courses" class="text-gray-700 hover:text-primary-600 font-medium">Courses</a>
+        </nav>
+
+        <!-- User Actions -->
+        <div class="flex items-center space-x-4">
+            <div x-data="{ isOpen: false }" class="relative">
+                <button @click="isOpen = !isOpen" class="flex items-center text-gray-700 hover:text-primary-600">
+                    <span class="mr-1">Student</span>
+                    <i class="fas fa-user-graduate text-primary-600"></i>
+                </button>
+                <div x-show="isOpen" @click.away="isOpen = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                    <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                    <a href="settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                    <div class="border-t border-gray-100"></div>
+                    <a href="../index.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                </div>
+            </div>
+            <a href="/cart" class="relative text-gray-700 hover:text-primary-600">
+                <i class="fas fa-shopping-cart text-xl"></i>
+                <span x-data="{ get cartCount() { return Alpine.store('cart').count } }"
+                      x-text="cartCount"
+                      class="absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                      x-show="cartCount > 0"
+                      x-cloak></span>
+            </a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button class="md:hidden text-gray-700" x-data="{ isOpen: false }" @click="isOpen = !isOpen">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="md:hidden" x-data="{ isOpen: false }" x-show="isOpen" x-cloak>
+        <div class="px-4 py-2 space-y-2">
+            <a href="../index.html" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Home</a>
+            <a href="../pages/about.html" class="block text-gray-700 hover:text-primary-600 font-medium py-2">About Us</a>
+            <a href="/how-it-works" class="block text-gray-700 hover:text-primary-600 font-medium py-2">How It Works</a>
+            <a href="/courses" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Courses</a>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-primary-800 text-white p-4">
+        <nav x-data="{ activeSection: 'dashboard' }">
+            <div class="space-y-2">
+                <h3 class="text-xs uppercase tracking-wider text-primary-200 font-semibold mb-3">Main</h3>
+                <a href="dashboard.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'dashboard' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'dashboard'">
+                    <i class="fas fa-tachometer-alt w-5 h-5 mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                <h3 class="text-xs uppercase tracking-wider text-primary-200 font-semibold mt-6 mb-3">Learning</h3>
+                <a href="my-courses.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'my-courses' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'my-courses'">
+                    <i class="fas fa-book w-5 h-5 mr-3"></i>
+                    <span>My Courses</span>
+                </a>
+                <a href="browse-courses.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'browse-courses' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'browse-courses'">
+                    <i class="fas fa-search w-5 h-5 mr-3"></i>
+                    <span>Browse Courses</span>
+                </a>
+                <a href="assessments.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'assessments' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'assessments'">
+                    <i class="fas fa-tasks w-5 h-5 mr-3"></i>
+                    <span>Assessments</span>
+                </a>
+                <a href="grades.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'grades' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'grades'">
+                    <i class="fas fa-star w-5 h-5 mr-3"></i>
+                    <span>Grades</span>
+                </a>
+                <h3 class="text-xs uppercase tracking-wider text-primary-200 font-semibold mt-6 mb-3">Communication</h3>
+                <a href="forums.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'forums' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'forums'">
+                    <i class="fas fa-comments w-5 h-5 mr-3"></i>
+                    <span>Forums</span>
+                </a>
+                <a href="messages.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'messages' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'messages'">
+                    <i class="fas fa-envelope w-5 h-5 mr-3"></i>
+                    <span>Messages</span>
+                </a>
+                <h3 class="text-xs uppercase tracking-wider text-primary-200 font-semibold mt-6 mb-3">Account</h3>
+                <a href="profile.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'profile' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'profile'">
+                    <i class="fas fa-user w-5 h-5 mr-3"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="certificates.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'certificates' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'certificates'">
+                    <i class="fas fa-certificate w-5 h-5 mr-3"></i>
+                    <span>Certificates</span>
+                </a>
+                <a href="settings.html"
+                   class="flex items-center px-4 py-2 rounded-lg transition-colors"
+                   :class="activeSection === 'settings' ? 'bg-primary-700' : 'hover:bg-primary-700'"
+                   @click="activeSection = 'settings'">
+                    <i class="fas fa-cog w-5 h-5 mr-3"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6" x-data="studentDashboard()">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Student Dashboard</h1>
+            <p class="text-gray-600">Welcome back, <span x-text="student.name">Student</span>!</p>
+        </div>
+
+        <!-- Learning Progress Overview -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Your Learning Progress</h3>
+            </div>
+            <div class="p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                    <div>
+                        <h4 class="text-md font-medium text-gray-700">Overall Completion</h4>
+                        <p class="text-sm text-gray-500">Your progress across all enrolled courses</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 w-full md:w-1/2 lg:w-1/3">
+                        <div class="bg-gray-200 rounded-full h-4 w-full">
+                            <div class="bg-primary-600 h-4 rounded-full" :style="`width: ${overallProgress}%`"></div>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span class="text-xs text-gray-500">0%</span>
+                            <span class="text-xs font-medium text-primary-600" x-text="`${overallProgress}% Complete`"></span>
+                            <span class="text-xs text-gray-500">100%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <template x-for="course in enrolledCourses" :key="course.id">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="text-md font-medium text-gray-700" x-text="course.title"></h4>
+                                    <p class="text-sm text-gray-500" x-text="course.certification_type"></p>
+                                </div>
+                                <span class="bg-primary-100 text-primary-800 text-xs font-semibold px-2.5 py-0.5 rounded" x-text="`${course.progress}% Complete`"></span>
+                            </div>
+                            <div class="mt-4">
+                                <div class="bg-gray-200 rounded-full h-3 w-full">
+                                    <div class="bg-primary-600 h-3 rounded-full" :style="`width: ${course.progress}%`"></div>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex justify-between">
+                                <a :href="`course-detail.html?id=${course.id}`" class="text-sm font-medium text-primary-600 hover:text-primary-800">Continue Learning</a>
+                                <span class="text-sm text-gray-500" x-text="`${course.completed_modules}/${course.total_modules} modules`"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Assessments and Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Upcoming Assessments -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800">Upcoming Assessments</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <template x-for="assessment in upcomingAssessments" :key="assessment.id">
+                            <div class="flex justify-between items-center p-4 border border-gray-200 rounded-lg">
+                                <div>
+                                    <h4 class="text-md font-medium text-gray-700" x-text="assessment.title"></h4>
+                                    <p class="text-sm text-gray-500" x-text="assessment.course_title"></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-gray-700" x-text="formatDate(assessment.due_date)"></p>
+                                    <p class="text-xs text-gray-500" x-text="`${assessment.estimated_time} min`"></p>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="upcomingAssessments.length === 0" class="text-center py-4">
+                            <p class="text-gray-500">No upcoming assessments!</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="assessments.html" class="text-primary-600 hover:text-primary-800 font-medium">View all assessments</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800">Recent Activity</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <template x-for="activity in recentActivity" :key="activity.id">
+                            <div class="flex items-start">
+                                <div class="bg-primary-100 p-2 rounded">
+                                    <i :class="`fas fa-${activity.icon} text-primary-600`"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-700" x-text="activity.description"></p>
+                                    <p class="text-xs text-gray-500" x-text="formatDate(activity.created_at)"></p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="mt-4">
+                        <a href="#" class="text-primary-600 hover:text-primary-800 font-medium">View all activity</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Paths and Recommendations -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Learning Path -->
+            <div class="bg-white rounded-lg shadow lg:col-span-2">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800">Your Learning Path</h3>
+                </div>
+                <div class="p-6">
+                    <div class="relative">
+                        <!-- Path Timeline -->
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-primary-200"></div>
+
+                        <div class="space-y-8">
+                            <template x-for="(step, index) in learningPath" :key="step.id">
+                                <div class="relative pl-10">
+                                    <!-- Status Indicator -->
+                                    <div class="absolute left-0 top-1 w-8 h-8 rounded-full flex items-center justify-center"
+                                         :class="{
+                                                'bg-primary-600 text-white': step.status === 'completed',
+                                                'bg-yellow-500 text-white': step.status === 'in-progress',
+                                                'bg-gray-200 text-gray-700': step.status === 'pending'
+                                             }">
+                                        <template x-if="step.status === 'completed'">
+                                            <i class="fas fa-check"></i>
+                                        </template>
+                                        <template x-if="step.status === 'in-progress'">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </template>
+                                        <template x-if="step.status === 'pending'">
+                                            <span x-text="index + 1"></span>
+                                        </template>
+                                    </div>
+
+                                    <!-- Step Content -->
+                                    <div>
+                                        <h4 class="text-md font-medium text-gray-700" x-text="step.title"></h4>
+                                        <p class="text-sm text-gray-500 mt-1" x-text="step.description"></p>
+                                        <div class="mt-2">
+                                            <template x-if="step.status === 'completed'">
+                                                    <span class="inline-flex items-center text-xs font-medium text-green-600">
+                                                        <i class="fas fa-check-circle mr-1"></i> Completed
+                                                    </span>
+                                            </template>
+                                            <template x-if="step.status === 'in-progress'">
+                                                <a :href="step.link" class="inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-800">
+                                                    Continue <i class="fas fa-arrow-right ml-1"></i>
+                                                </a>
+                                            </template>
+                                            <template x-if="step.status === 'pending'">
+                                                <span class="text-xs text-gray-500">Upcoming</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Courses -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800">Recommended For You</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <template x-for="course in recommendedCourses" :key="course.id">
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <h4 class="text-md font-medium text-gray-700" x-text="course.title"></h4>
+                                <p class="text-sm text-gray-500 mt-1" x-text="course.description"></p>
+                                <div class="mt-3 flex justify-between items-center">
+                                    <span class="text-sm font-bold text-primary-700" x-text="'$' + course.price"></span>
+                                    <button @click="Alpine.store('cart').addItem(course)"
+                                            class="text-xs bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded">
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="mt-4">
+                        <a href="browse-courses.html" class="text-primary-600 hover:text-primary-800 font-medium">Browse all courses</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Footer -->
+<footer class="bg-primary-900 text-white py-8">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-xl font-bold mb-4">DecipherInfoSec.</h3>
+                <p class="text-primary-200">Accelerate your cybersecurity career with our specialized courses and certifications.</p>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                <ul class="space-y-2">
+                    <li><a href="../index.html" class="text-primary-200 hover:text-white">Home</a></li>
+                    <li><a href="../pages/about.html" class="text-primary-200 hover:text-white">About Us</a></li>
+                    <li><a href="/courses" class="text-primary-200 hover:text-white">Courses</a></li>
+                    <li><a href="/contact" class="text-primary-200 hover:text-white">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Legal</h4>
+                <ul class="space-y-2">
+                    <li><a href="/terms" class="text-primary-200 hover:text-white">Terms of Service</a></li>
+                    <li><a href="/privacy" class="text-primary-200 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="/cookie-policy" class="text-primary-200 hover:text-white">Cookie Policy</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Connect With Us</h4>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-primary-200 hover:text-white">
+                        <i class="fab fa-facebook-f text-xl"></i>
+                    </a>
+                    <a href="#" class="text-primary-200 hover:text-white">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-primary-200 hover:text-white">
+                        <i class="fab fa-linkedin-in text-xl"></i>
+                    </a>
+                    <a href="#" class="text-primary-200 hover:text-white">
+                        <i class="fab fa-youtube text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-primary-800 mt-8 pt-6 text-center text-primary-300">
+            <p>&copy; 2023 DecipherInfoSec. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Alpine.js Store for Cart -->
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('cart', {
+            items: [],
+            get count() {
+                return this.items.length;
+            },
+            addItem(item) {
+                // Check if item already exists in cart
+                const existingItem = this.items.find(i => i.id === item.id);
+                if (!existingItem) {
+                    this.items.push(item);
+                }
+            }
+        });
+    });
+
+    function studentDashboard() {
+        return {
+            student: {
+                name: 'John Doe',
+                email: 'john.doe@example.com',
+                role: 'student',
+                id: 1
+            },
+            enrolledCourses: [],
+            upcomingAssessments: [],
+            recentActivity: [],
+            recommendedCourses: [],
+            learningPath: [],
+            overallProgress: 0,
+            init() {
+                this.fetchStudentData();
+                this.fetchEnrolledCourses();
+                this.fetchUpcomingAssessments();
+                this.fetchRecentActivity();
+                this.fetchRecommendedCourses();
+                this.fetchLearningPath();
+            },
+            async fetchStudentData() {
+                try {
+                    // In a real application, this would be an API call to /api/v1/users/me
+                    // For demo purposes, we're using the predefined data
+                } catch (error) {
+                    console.error('Error fetching student data:', error);
+                }
+            },
+            async fetchEnrolledCourses() {
+                try {
+                    // In a real application, this would be an API call to /api/v1/enrollments/
+                    // For demo purposes, we're setting mock data
+                    setTimeout(() => {
+                        this.enrolledCourses = [
+                            { id: 1, title: 'CompTIA Security+', certification_type: 'Security+', progress: 65, completed_modules: 7, total_modules: 12 },
+                            { id: 2, title: 'Certified Ethical Hacker (CEH)', certification_type: 'CEH', progress: 30, completed_modules: 3, total_modules: 10 },
+                            { id: 3, title: 'Network Security Fundamentals', certification_type: 'Custom', progress: 10, completed_modules: 1, total_modules: 8 }
+                        ];
+                        this.calculateOverallProgress();
+                    }, 500);
+                } catch (error) {
+                    console.error('Error fetching enrolled courses:', error);
+                }
+            },
+            calculateOverallProgress() {
+                if (this.enrolledCourses.length === 0) {
+                    this.overallProgress = 0;
+                    return;
+                }
+
+                const sum = this.enrolledCourses.reduce((total, course) => total + course.progress, 0);
+                this.overallProgress = Math.round(sum / this.enrolledCourses.length);
+            },
+            async fetchUpcomingAssessments() {
+                try {
+                    // In a real application, this would be an API call
+                    // For demo purposes, we're setting mock data
+                    setTimeout(() => {
+                        this.upcomingAssessments = [
+                            { id: 1, title: 'Module 8 Quiz', course_title: 'CompTIA Security+', due_date: '2023-05-15T23:59:59Z', estimated_time: 45 },
+                            { id: 2, title: 'Practical Lab: Network Scanning', course_title: 'Certified Ethical Hacker (CEH)', due_date: '2023-05-18T23:59:59Z', estimated_time: 90 },
+                            { id: 3, title: 'Module 2 Assessment', course_title: 'Network Security Fundamentals', due_date: '2023-05-20T23:59:59Z', estimated_time: 60 }
+                        ];
+                    }, 500);
+                } catch (error) {
+                    console.error('Error fetching upcoming assessments:', error);
+                }
+            },
+            async fetchRecentActivity() {
+                try {
+                    // In a real application, this would be an API call
+                    // For demo purposes, we're setting mock data
+                    setTimeout(() => {
+                        this.recentActivity = [
+                            { id: 1, description: 'Completed Module 7 in CompTIA Security+', created_at: '2023-05-10T14:30:00Z', icon: 'check-circle' },
+                            { id: 2, description: 'Submitted "Network Vulnerability Assessment" assignment', created_at: '2023-05-09T16:45:00Z', icon: 'file-upload' },
+                            { id: 3, description: 'Started Module 4 in CEH course', created_at: '2023-05-08T10:15:00Z', icon: 'play-circle' },
+                            { id: 4, description: 'Earned badge: "Security Foundations"', created_at: '2023-05-07T09:20:00Z', icon: 'medal' }
+                        ];
+                    }, 500);
+                } catch (error) {
+                    console.error('Error fetching recent activity:', error);
+                }
+            },
+            async fetchRecommendedCourses() {
+                try {
+                    // In a real application, this would be an API call
+                    // For demo purposes, we're setting mock data
+                    setTimeout(() => {
+                        this.recommendedCourses = [
+                            { id: 4, title: 'CISSP Certification', description: 'Prepare for the industry-leading information security certification', price: 299.99 },
+                            { id: 5, title: 'OSCP Preparation', description: 'Hands-on penetration testing and ethical hacking skills', price: 349.99 },
+                            { id: 6, title: 'Cloud Security Specialist', description: 'Master security for AWS, Azure, and Google Cloud', price: 249.99 }
+                        ];
+                    }, 500);
+                } catch (error) {
+                    console.error('Error fetching recommended courses:', error);
+                }
+            },
+            async fetchLearningPath() {
+                try {
+                    // In a real application, this would be an API call
+                    // For demo purposes, we're setting mock data
+                    setTimeout(() => {
+                        this.learningPath = [
+                            { id: 1, title: 'Security Fundamentals', description: 'Learn the core concepts of cybersecurity', status: 'completed', link: '#' },
+                            { id: 2, title: 'Network Security', description: 'Understand network protocols and security mechanisms', status: 'completed', link: '#' },
+                            { id: 3, title: 'Cryptography', description: 'Master encryption techniques and secure communications', status: 'in-progress', link: 'course-detail.html?id=1&module=7' },
+                            { id: 4, title: 'Identity and Access Management', description: 'Control system access and manage authentication', status: 'pending', link: '#' },
+                            { id: 5, title: 'Security Operations', description: 'Learn monitoring, incident response, and recovery procedures', status: 'pending', link: '#' }
+                        ];
+                    }, 500);
+                } catch (error) {
+                    console.error('Error fetching learning path:', error);
+                }
+            },
+            formatDate(dateString) {
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return new Date(dateString).toLocaleDateString(undefined, options);
+            }
+        }
+    }
+</script>
+</body>
+</html>

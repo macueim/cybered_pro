@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Threat Intelligence Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .dashboard-container {
+            min-height: 100vh;
+            display: grid;
+            grid-template-areas:
+                "header header header"
+                "map map map"
+                "sidebar threats alerts";
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: 80px 1fr 300px;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .header {
+            grid-area: header;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-critical { background: #ef4444; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #3b82f6;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .threat-list {
+            list-style: none;
+        }
+
+        .threat-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 3px solid;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .threat-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateX(5px);
+        }
+
+        .threat-item.critical { border-left-color: #ef4444; }
+        .threat-item.high { border-left-color: #f59e0b; }
+        .threat-item.medium { border-left-color: #10b981; }
+        .threat-item.low { border-left-color: #6b7280; }
+
+        .threat-item .type {
+            font-weight: bold;
+            font-size: 12px;
+            color: #3b82f6;
+        }
+
+        .threat-item .location {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        .threat-item .timestamp {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .map-container {
+            grid-area: map;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            height: calc(100vh - 450px);
+            min-height: 400px;
+        }
+
+        .world-map {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 8px;
+            background: #0a0f1c;
+            overflow: hidden;
+        }
+
+        .world-map svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
+        }
+
+        .country {
+            fill: #1e293b;
+            stroke: #3b82f6;
+            stroke-width: 0.8;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.3));
+        }
+
+        .country:hover {
+            fill: #2563eb;
+            filter: brightness(1.4) drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+        }
+
+        .country.under-attack {
+            fill: #dc2626;
+            stroke: #ef4444;
+            animation: underAttackPulse 2s infinite;
+        }
+
+        .country.attack-source {
+            fill: #ea580c;
+            stroke: #f97316;
+            animation: attackSourcePulse 2s infinite;
+        }
+
+        @keyframes underAttackPulse {
+            0% { fill: #dc2626; filter: brightness(1) drop-shadow(0 0 5px rgba(220, 38, 38, 0.8)); }
+            50% { fill: #ef4444; filter: brightness(1.3) drop-shadow(0 0 15px rgba(239, 68, 68, 1)); }
+            100% { fill: #dc2626; filter: brightness(1) drop-shadow(0 0 5px rgba(220, 38, 38, 0.8)); }
+        }
+
+        @keyframes attackSourcePulse {
+            0% { fill: #ea580c; filter: brightness(1) drop-shadow(0 0 5px rgba(234, 88, 12, 0.8)); }
+            50% { fill: #f97316; filter: brightness(1.3) drop-shadow(0 0 15px rgba(249, 115, 22, 1)); }
+            100% { fill: #ea580c; filter: brightness(1) drop-shadow(0 0 5px rgba(234, 88, 12, 0.8)); }
+        }
+
+        .ocean {
+            fill: #0c1629;
+            background: radial-gradient(circle at 30% 30%, #1e40af 0%, #0c1629 70%);
+        }
+
+        .grid-lines {
+            stroke: #1e40af;
+            stroke-width: 0.4;
+            opacity: 0.4;
+        }
+
+        .attack-point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            animation: attackPulse 1.5s infinite;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .attack-point::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            background: inherit;
+            opacity: 0.4;
+            animation: ripple 2s infinite;
+        }
+
+        .attack-point::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border-radius: 50%;
+            border: 2px solid;
+            border-color: inherit;
+            opacity: 0.6;
+            animation: ripple 2s infinite 0.5s;
+        }
+
+        @keyframes attackPulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        .ddos {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: #ef4444;
+            box-shadow: 0 0 20px #ef4444, 0 0 40px #ef444450;
+        }
+        .malware {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            color: #f59e0b;
+            box-shadow: 0 0 20px #f59e0b, 0 0 40px #f59e0b50;
+        }
+        .apt {
+            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+            color: #8b5cf6;
+            box-shadow: 0 0 20px #8b5cf6, 0 0 40px #8b5cf650;
+        }
+        .dos {
+            background: linear-gradient(45deg, #ec4899, #db2777);
+            color: #ec4899;
+            box-shadow: 0 0 20px #ec4899, 0 0 40px #ec489950;
+        }
+        .phishing {
+            background: linear-gradient(45deg, #06b6d4, #0891b2);
+            color: #06b6d4;
+            box-shadow: 0 0 20px #06b6d4, 0 0 40px #06b6d450;
+        }
+        .ransomware {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: #10b981;
+            box-shadow: 0 0 20px #10b981, 0 0 40px #10b98150;
+        }
+        .botnet {
+            background: linear-gradient(45deg, #6366f1, #4f46e5);
+            color: #6366f1;
+            box-shadow: 0 0 20px #6366f1, 0 0 40px #6366f150;
+        }
+
+        .attack-line {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            animation: attackFlow 4s infinite;
+            opacity: 0.9;
+            z-index: 15;
+            border-radius: 2px;
+        }
+
+        .attack-line::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            border-radius: 2px;
+            opacity: 0.5;
+            filter: blur(2px);
+        }
+
+        .attack-line.ddos { color: #ef4444; }
+        .attack-line.malware { color: #f59e0b; }
+        .attack-line.apt { color: #8b5cf6; }
+        .attack-line.dos { color: #ec4899; }
+        .attack-line.phishing { color: #06b6d4; }
+        .attack-line.ransomware { color: #10b981; }
+        .attack-line.botnet { color: #6366f1; }
+
+        @keyframes attackFlow {
+            0% {
+                transform: scaleX(0);
+                opacity: 0;
+                filter: brightness(1) drop-shadow(0 0 0px currentColor);
+            }
+            20% {
+                transform: scaleX(0.3);
+                opacity: 0.8;
+                filter: brightness(1.2) drop-shadow(0 0 5px currentColor);
+            }
+            50% {
+                transform: scaleX(1);
+                opacity: 1;
+                filter: brightness(1.5) drop-shadow(0 0 10px currentColor);
+            }
+            80% {
+                transform: scaleX(1);
+                opacity: 0.8;
+                filter: brightness(1.2) drop-shadow(0 0 5px currentColor);
+            }
+            100% {
+                transform: scaleX(0);
+                opacity: 0;
+                filter: brightness(1) drop-shadow(0 0 0px currentColor);
+            }
+        }
+
+        .stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            width: 200px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 3px solid;
+            text-align: center;
+        }
+
+        .stat-card.threats { border-left-color: #ef4444; }
+        .stat-card.blocked { border-left-color: #10b981; }
+        .stat-card.active { border-left-color: #f59e0b; }
+        .stat-card.countries { border-left-color: #3b82f6; }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+
+        .threats-panel {
+            grid-area: threats;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .alerts-panel {
+            grid-area: alerts;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            font-size: 12px;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .alert-time {
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    </head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div>
+                    <h1>Cyber Threat Intelligence</h1>
+                    <small>Real-time Global Security Monitoring</small>
+                </div>
+            </div>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <div class="status-dot status-online"></div>
+                    <span>System Online</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot status-warning"></div>
+                    <span>High Alert</span>
+                </div>
+                <div class="status-item">
+                    <span id="current-time"></span>
+                </div>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <h3>Active Threats</h3>
+            <ul class="threat-list" id="threat-list">
+                <!-- Populated by JavaScript -->
+            </ul>
+        </aside>
+
+        <main class="map-container">
+            <div class="world-map" id="world-map">
+                <svg id="d3-world-map"></svg>
+                <!-- Attack points will be added here -->
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color ddos"></div>
+                    <span>DDoS Attack</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color malware"></div>
+                    <span>Malware</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color apt"></div>
+                    <span>APT Campaign</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color dos"></div>
+                    <span>DoS Attack</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color phishing"></div>
+                    <span>Phishing</span>
+                </div>
+            </div>
+        </main>
+
+        <aside class="stats-panel">
+            <div class="stat-card threats">
+                <div class="stat-number" id="total-threats">0</div>
+                <div class="stat-label">Total Threats</div>
+            </div>
+            <div class="stat-card blocked">
+                <div class="stat-number" id="blocked-attacks">0</div>
+                <div class="stat-label">Blocked Attacks</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-number" id="active-incidents">0</div>
+                <div class="stat-label">Active Incidents</div>
+            </div>
+            <div class="stat-card countries">
+                <div class="stat-number" id="affected-countries">0</div>
+                <div class="stat-label">Affected Countries</div>
+            </div>
+        </aside>
+
+        <section class="threats-panel">
+            <h3>Threat Intelligence Feed</h3>
+            <div id="threat-feed">
+                <!-- Real-time threat data -->
+            </div>
+        </section>
+
+        <section class="alerts-panel">
+            <h3>Recent Alerts</h3>
+            <div id="alerts-feed">
+                <!-- Alert notifications -->
+            </div>
+        </section>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        class CTIDashboard {
+            constructor() {
+                this.threats = [];
+                this.alerts = [];
+                this.stats = {
+                    totalThreats: 0,
+                    blockedAttacks: 0,
+                    activeIncidents: 0,
+                    affectedCountries: 0
+                };
+
+                this.threatTypes = ['ddos', 'malware', 'apt', 'dos', 'phishing'];
+                this.countries = [
+                    { name: 'New York, USA', x: 20, y: 40, code: 'US' },
+                    { name: 'Los Angeles, USA', x: 15, y: 45, code: 'US' },
+                    { name: 'London, UK', x: 50, y: 35, code: 'GB' },
+                    { name: 'Berlin, Germany', x: 52, y: 38, code: 'DE' },
+                    { name: 'Moscow, Russia', x: 60, y: 28, code: 'RU' },
+                    { name: 'Beijing, China', x: 75, y: 40, code: 'CN' },
+                    { name: 'Shanghai, China', x: 78, y: 42, code: 'CN' },
+                    { name: 'Tokyo, Japan', x: 82, y: 38, code: 'JP' },
+                    { name: 'Seoul, South Korea', x: 80, y: 40, code: 'KR' },
+                    { name: 'Mumbai, India', x: 68, y: 50, code: 'IN' },
+                    { name: 'Delhi, India', x: 70, y: 48, code: 'IN' },
+                    { name: 'Singapore', x: 72, y: 58, code: 'SG' },
+                    { name: 'Sydney, Australia', x: 85, y: 75, code: 'AU' },
+                    { name: 'São Paulo, Brazil', x: 32, y: 68, code: 'BR' },
+                    { name: 'Rio de Janeiro, Brazil', x: 35, y: 66, code: 'BR' },
+                    { name: 'Buenos Aires, Argentina', x: 30, y: 78, code: 'AR' },
+                    { name: 'Mexico City, Mexico', x: 18, y: 50, code: 'MX' },
+                    { name: 'Toronto, Canada', x: 22, y: 32, code: 'CA' },
+                    { name: 'Vancouver, Canada', x: 12, y: 30, code: 'CA' },
+                    { name: 'Paris, France', x: 51, y: 36, code: 'FR' },
+                    { name: 'Rome, Italy', x: 53, y: 42, code: 'IT' },
+                    { name: 'Madrid, Spain', x: 49, y: 44, code: 'ES' },
+                    { name: 'Amsterdam, Netherlands', x: 51, y: 34, code: 'NL' },
+                    { name: 'Stockholm, Sweden', x: 54, y: 28, code: 'SE' },
+                    { name: 'Warsaw, Poland', x: 55, y: 34, code: 'PL' },
+                    { name: 'Istanbul, Turkey', x: 58, y: 44, code: 'TR' },
+                    { name: 'Dubai, UAE', x: 63, y: 52, code: 'AE' },
+                    { name: 'Tel Aviv, Israel', x: 59, y: 48, code: 'IL' },
+                    { name: 'Cairo, Egypt', x: 57, y: 50, code: 'EG' },
+                    { name: 'Lagos, Nigeria', x: 52, y: 58, code: 'NG' },
+                    { name: 'Johannesburg, South Africa', x: 58, y: 72, code: 'ZA' },
+                    { name: 'Bangkok, Thailand', x: 72, y: 54, code: 'TH' },
+                    { name: 'Jakarta, Indonesia', x: 74, y: 62, code: 'ID' },
+                    { name: 'Manila, Philippines', x: 78, y: 54, code: 'PH' },
+                    { name: 'Kuala Lumpur, Malaysia', x: 72, y: 56, code: 'MY' },
+                    { name: 'Ho Chi Minh City, Vietnam', x: 74, y: 52, code: 'VN' },
+                    { name: 'Taipei, Taiwan', x: 78, y: 46, code: 'TW' },
+                    { name: 'Hong Kong', x: 76, y: 44, code: 'HK' },
+                    { name: 'Macau', x: 76, y: 45, code: 'MO' }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.updateClock();
+                setInterval(() => this.updateClock(), 1000);
+
+                this.generateInitialThreats();
+                this.startRealTimeSimulation();
+
+                this.setupEventListeners();
+            }
+
+            updateClock() {
+                const now = new Date();
+                document.getElementById('current-time').textContent =
+                    now.toLocaleTimeString('en-US', {
+                        hour12: false,
+                        timeZone: 'UTC'
+                    }) + ' UTC';
+            }
+
+            generateInitialThreats() {
+                // Add some high-profile ongoing attacks
+                const initialAttacks = [
+                    { type: 'APT', source: 'Beijing, China', target: 'Washington, DC, USA', severity: 'critical' },
+                    { type: 'Ransomware', source: 'Moscow, Russia', target: 'London, UK', severity: 'high' },
+                    { type: 'DDoS', source: 'Pyongyang, North Korea', target: 'Seoul, South Korea', severity: 'high' },
+                    { type: 'Botnet', source: 'Tehran, Iran', target: 'Tel Aviv, Israel', severity: 'medium' },
+                    { type: 'Phishing', source: 'Lagos, Nigeria', target: 'New York, USA', severity: 'medium' }
+                ];
+
+                // Add initial high-profile attacks
+                initialAttacks.forEach(attack => {
+                    const sourceCity = this.countries.find(c => c.name.includes(attack.source.split(',')[0]));
+                    const targetCity = this.countries.find(c => c.name.includes(attack.target.split(',')[0]));
+
+                    if (sourceCity && targetCity) {
+                        const threat = {
+                            id: Date.now() + Math.random(),
+                            type: attack.type,
+                            severity: attack.severity,
+                            source: sourceCity,
+                            target: targetCity,
+                            timestamp: new Date(),
+                            description: this.generateThreatDescription(attack.type),
+                            countrySource: attack.source,
+                            countryTarget: attack.target
+                        };
+                        this.threats.unshift(threat);
+                        this.addAttackPoint(threat);
+                        this.highlightCountries(threat);
+                    }
+                });
+
+                // Add more random threats
+                for (let i = 0; i < 10; i++) {
+                    this.addRandomThreat();
+                }
+            }
+
+            addRandomThreat() {
+                const types = ['DDoS', 'Malware', 'APT', 'DoS', 'Phishing', 'Ransomware', 'Botnet'];
+                const severities = ['critical', 'high', 'medium', 'low'];
+                const countries = this.countries;
+
+                const sourceCountry = countries[Math.floor(Math.random() * countries.length)];
+                let targetCountry = countries[Math.floor(Math.random() * countries.length)];
+
+                // Ensure source and target are different
+                while (targetCountry === sourceCountry) {
+                    targetCountry = countries[Math.floor(Math.random() * countries.length)];
+                }
+
+                const threat = {
+                    id: Date.now() + Math.random(),
+                    type: types[Math.floor(Math.random() * types.length)],
+                    severity: severities[Math.floor(Math.random() * severities.length)],
+                    source: sourceCountry,
+                    target: targetCountry,
+                    timestamp: new Date(),
+                    description: this.generateThreatDescription(),
+                    countrySource: sourceCountry.name,
+                    countryTarget: targetCountry.name
+                };
+
+                this.threats.unshift(threat);
+                if (this.threats.length > 50) this.threats.pop();
+
+                this.updateThreatDisplay();
+                this.addAttackPoint(threat);
+                this.highlightCountries(threat);
+                this.updateStats();
+
+                return threat;
+            }
+
+            generateThreatDescription(threatType) {
+                const descriptions = {
+                    'DDoS': [
+                        'Massive botnet launching coordinated DDoS attack',
+                        'Distributed denial of service targeting critical infrastructure',
+                        'Volumetric attack overwhelming network capacity',
+                        'Multi-vector DDoS campaign detected'
+                    ],
+                    'Malware': [
+                        'Advanced persistent malware deployment detected',
+                        'Trojan horse infiltrating corporate networks',
+                        'Worm propagation across multiple systems',
+                        'Backdoor installation for remote access'
+                    ],
+                    'APT': [
+                        'State-sponsored threat actor conducting espionage',
+                        'Advanced persistent threat campaign identified',
+                        'Long-term reconnaissance and data exfiltration',
+                        'Sophisticated attack chain with multiple stages'
+                    ],
+                    'Ransomware': [
+                        'Crypto-ransomware encrypting critical data',
+                        'Double extortion ransomware campaign',
+                        'Ransomware-as-a-Service operation detected',
+                        'File encryption with ransom demand'
+                    ],
+                    'Phishing': [
+                        'Credential harvesting campaign targeting executives',
+                        'Business email compromise attempt',
+                        'Spear phishing with malicious attachments',
+                        'Social engineering attack via email'
+                    ],
+                    'Botnet': [
+                        'Zombie network performing coordinated attacks',
+                        'Command and control infrastructure active',
+                        'Infected devices participating in botnet',
+                        'Distributed computing attack platform'
+                    ],
+                    'DoS': [
+                        'Single-source denial of service attack',
+                        'Application layer attack targeting web services',
+                        'Protocol exploitation causing service disruption',
+                        'Resource exhaustion attack detected'
+                    ]
+                };
+
+                const typeDescriptions = descriptions[threatType] || descriptions['Malware'];
+                return typeDescriptions[Math.floor(Math.random() * typeDescriptions.length)];
+            }
+
+            getCountryCoordinates(countryCode) {
+                // This function returns the centroid coordinates for a country
+                // based on its ISO code
+                const countryMap = {
+                    'US': [-95.7129, 37.0902],  // United States
+                    'GB': [-0.1278, 51.5074],   // United Kingdom
+                    'DE': [13.4050, 52.5200],   // Germany
+                    'RU': [37.6173, 55.7558],   // Russia
+                    'CN': [116.4074, 39.9042],  // China
+                    'JP': [139.6917, 35.6895],  // Japan
+                    'KR': [126.9780, 37.5665],  // South Korea
+                    'IN': [77.2090, 28.6139],   // India
+                    'SG': [103.8198, 1.3521],   // Singapore
+                    'AU': [151.2093, -33.8688], // Australia
+                    'BR': [-46.6333, -23.5505], // Brazil
+                    'AR': [-58.3816, -34.6037], // Argentina
+                    'MX': [-99.1332, 19.4326],  // Mexico
+                    'CA': [-79.3832, 43.6532],  // Canada
+                    'FR': [2.3522, 48.8566],    // France
+                    'IT': [12.4964, 41.9028],   // Italy
+                    'ES': [-3.7038, 40.4168],   // Spain
+                    'NL': [4.9041, 52.3676],    // Netherlands
+                    'SE': [18.0686, 59.3293],   // Sweden
+                    'PL': [21.0122, 52.2297],   // Poland
+                    'TR': [28.9784, 41.0082],   // Turkey
+                    'AE': [55.2708, 25.2048],   // UAE
+                    'IL': [35.2137, 31.7683],   // Israel
+                    'EG': [31.2357, 30.0444],   // Egypt
+                    'NG': [3.3792, 6.5244],     // Nigeria
+                    'ZA': [28.0473, -26.2041],  // South Africa
+                    'TH': [100.5018, 13.7563],  // Thailand
+                    'ID': [106.8456, -6.2088],  // Indonesia
+                    'PH': [120.9842, 14.5995],  // Philippines
+                    'MY': [101.6869, 3.1390],   // Malaysia
+                    'VN': [106.6297, 10.8231],  // Vietnam
+                    'TW': [121.5654, 25.0330],  // Taiwan
+                    'HK': [114.1694, 22.3193],  // Hong Kong
+                    'MO': [113.5439, 22.1987]   // Macau
+                };
+
+                return countryMap[countryCode] || null;
+            }
+
+            addAttackPoint(threat) {
+                // Get the SVG element
+                const svg = d3.select("#d3-world-map");
+                const threatType = threat.type.toLowerCase().replace(/\s+/g, '');
+
+                // Convert country coordinates to pixel positions using the projection
+                const projection = d3.geoMercator()
+                    .scale((svg.node().clientWidth + 1) / 2 / Math.PI)
+                    .translate([svg.node().clientWidth / 2, svg.node().clientHeight / 1.5]);
+
+                // Get the centroid of the source and target countries
+                const sourceCountry = d3.select(`#country-${threat.source.code.toLowerCase()}`);
+                const targetCountry = d3.select(`#country-${threat.target.code.toLowerCase()}`);
+
+                // If countries are found, highlight them
+                if (!sourceCountry.empty()) {
+                    sourceCountry
+                        .classed("attack-source", true)
+                        .transition()
+                        .duration(500)
+                        .style("fill", this.getThreatColor(threat.type));
+
+                    // Reset after animation
+                    setTimeout(() => {
+                        sourceCountry
+                            .classed("attack-source", false)
+                            .transition()
+                            .duration(500)
+                            .style("fill", "#1e293b");
+                    }, 12000);
+                }
+
+                if (!targetCountry.empty()) {
+                    targetCountry
+                        .classed("under-attack", true)
+                        .transition()
+                        .duration(500)
+                        .style("fill", "#dc2626");
+
+                    // Reset after animation
+                    setTimeout(() => {
+                        targetCountry
+                            .classed("under-attack", false)
+                            .transition()
+                            .duration(500)
+                            .style("fill", "#1e293b");
+                    }, 12000);
+                }
+
+                // Get coordinates for source and target
+                const sourceCoords = this.getCountryCoordinates(threat.source.code);
+                const targetCoords = this.getCountryCoordinates(threat.target.code);
+
+                if (sourceCoords && targetCoords) {
+                    // Add attack line from source to target
+                    this.addAttackLine(sourceCoords, targetCoords, threat.type);
+
+                    // Add tooltips for the attack
+                    this.addAttackTooltips(threat, sourceCoords, targetCoords);
+                }
+            }
+
+            addAttackLine(source, target, threatType) {
+                const svg = d3.select("#d3-world-map");
+                const threatClass = threatType.toLowerCase().replace(/\s+/g, '');
+                const threatColor = this.getThreatColor(threatType);
+
+                // Create a unique ID for this attack line
+                const lineId = `attack-line-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+                // Get the projection
+                const projection = d3.geoMercator()
+                    .scale((svg.node().clientWidth + 1) / 2 / Math.PI)
+                    .translate([svg.node().clientWidth / 2, svg.node().clientHeight / 1.5]);
+
+                // Create a great arc between the two points
+                const geoPath = d3.geoPath().projection(projection);
+
+                // Create a GeoJSON LineString between the two points
+                const arcGenerator = d3.geoInterpolate(source, target);
+
+                // Create points along the arc for animation
+                const numPoints = 150; // Increased from 100 to 150 for smoother arc
+                const points = [];
+                for (let i = 0; i <= numPoints; i++) {
+                    const t = i / numPoints;
+                    points.push(arcGenerator(t));
+                }
+
+                // Create a GeoJSON LineString from the points
+                const lineString = {
+                    type: "LineString",
+                    coordinates: points
+                };
+
+                // Add a glow filter for the arc
+                const defs = svg.append("defs");
+                const filter = defs.append("filter")
+                    .attr("id", `glow-${lineId}`)
+                    .attr("x", "-50%")
+                    .attr("y", "-50%")
+                    .attr("width", "200%")
+                    .attr("height", "200%");
+
+                filter.append("feGaussianBlur")
+                    .attr("stdDeviation", "3")
+                    .attr("result", "blur");
+
+                filter.append("feComposite")
+                    .attr("in", "SourceGraphic")
+                    .attr("in2", "blur")
+                    .attr("operator", "over");
+
+                // Add a wider background arc for the glow effect
+                const glowArc = svg.append("path")
+                    .datum(lineString)
+                    .attr("d", geoPath)
+                    .attr("class", `attack-line-glow ${threatClass}`)
+                    .attr("fill", "none")
+                    .attr("stroke", threatColor)
+                    .attr("stroke-width", 6)
+                    .attr("opacity", 0.3)
+                    .attr("filter", `url(#glow-${lineId})`)
+                    .attr("stroke-dasharray", function() {
+                        const length = this.getTotalLength();
+                        return `${length} ${length}`;
+                    })
+                    .attr("stroke-dashoffset", function() {
+                        return this.getTotalLength();
+                    });
+
+                // Add the main arc to the SVG
+                const arc = svg.append("path")
+                    .datum(lineString)
+                    .attr("d", geoPath)
+                    .attr("id", lineId)
+                    .attr("class", `attack-line ${threatClass}`)
+                    .attr("fill", "none")
+                    .attr("stroke", threatColor)
+                    .attr("stroke-width", 2.5)
+                    .attr("opacity", 0.9)
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-dasharray", function() {
+                        const length = this.getTotalLength();
+                        return `${length} ${length}`;
+                    })
+                    .attr("stroke-dashoffset", function() {
+                        return this.getTotalLength();
+                    });
+
+                // Animate the arcs
+                glowArc.transition()
+                    .duration(2200)
+                    .attr("stroke-dashoffset", 0)
+                    .transition()
+                    .duration(2800)
+                    .attr("opacity", 0)
+                    .remove();
+
+                arc.transition()
+                    .duration(2000)
+                    .attr("stroke-dashoffset", 0)
+                    .transition()
+                    .duration(3000)
+                    .attr("opacity", 0)
+                    .remove();
+
+                // Add animated particles along the arc
+                this.addAttackParticles(source, target, threatType, lineId);
+
+                // Add a flash effect at the source
+                const sourcePos = projection(source);
+                const sourceFlash = svg.append("circle")
+                    .attr("cx", sourcePos[0])
+                    .attr("cy", sourcePos[1])
+                    .attr("r", 0)
+                    .attr("fill", threatColor)
+                    .attr("opacity", 0.7);
+
+                sourceFlash.transition()
+                    .duration(500)
+                    .attr("r", 10)
+                    .attr("opacity", 0)
+                    .remove();
+            }
+
+            addAttackParticles(source, target, threatType, lineId) {
+                const svg = d3.select("#d3-world-map");
+                const threatClass = threatType.toLowerCase().replace(/\s+/g, '');
+                const particleCount = 8; // Increased from 5 to 8
+                const threatColor = this.getThreatColor(threatType);
+
+                // Get the projection
+                const projection = d3.geoMercator()
+                    .scale((svg.node().clientWidth + 1) / 2 / Math.PI)
+                    .translate([svg.node().clientWidth / 2, svg.node().clientHeight / 1.5]);
+
+                // Create a great arc between the two points
+                const arcGenerator = d3.geoInterpolate(source, target);
+
+                // Add particles along the arc
+                for (let i = 0; i < particleCount; i++) {
+                    setTimeout(() => {
+                        // Vary particle size
+                        const size = Math.random() * 2 + 2; // Random size between 2 and 4
+
+                        // Create particle with glow effect
+                        const particle = svg.append("circle")
+                            .attr("class", `attack-particle ${threatClass}`)
+                            .attr("r", size)
+                            .attr("fill", threatColor)
+                            .attr("opacity", 0.9)
+                            .style("filter", `drop-shadow(0 0 ${size * 1.5}px ${threatColor})`);
+
+                        // Add a pulse effect
+                        const pulseEffect = svg.append("circle")
+                            .attr("class", `attack-particle-pulse ${threatClass}`)
+                            .attr("r", size * 1.5)
+                            .attr("fill", "none")
+                            .attr("stroke", threatColor)
+                            .attr("stroke-width", 1)
+                            .attr("opacity", 0.5);
+
+                        // Vary particle speed
+                        const speed = Math.random() * 1000 + 1500; // Random duration between 1500 and 2500ms
+
+                        // Animate the particle along the arc
+                        particle.transition()
+                            .duration(speed)
+                            .attrTween("transform", () => {
+                                return (t) => {
+                                    const p = arcGenerator(t);
+                                    const [x, y] = projection(p);
+                                    return `translate(${x}, ${y})`;
+                                };
+                            })
+                            .transition()
+                            .duration(300)
+                            .attr("opacity", 0)
+                            .remove();
+
+                        // Animate the pulse effect along the same path
+                        pulseEffect.transition()
+                            .duration(speed)
+                            .attrTween("transform", () => {
+                                return (t) => {
+                                    const p = arcGenerator(t);
+                                    const [x, y] = projection(p);
+                                    return `translate(${x}, ${y})`;
+                                };
+                            })
+                            .transition()
+                            .duration(300)
+                            .attr("opacity", 0)
+                            .remove();
+
+                    }, i * 300); // Reduced delay between particles
+                }
+
+                // Add impact effect at target
+                setTimeout(() => {
+                    const targetPos = projection(target);
+                    const impactCircle = svg.append("circle")
+                        .attr("cx", targetPos[0])
+                        .attr("cy", targetPos[1])
+                        .attr("r", 0)
+                        .attr("fill", threatColor)
+                        .attr("opacity", 0.7)
+                        .style("filter", `drop-shadow(0 0 10px ${threatColor})`);
+
+                    impactCircle.transition()
+                        .duration(800)
+                        .attr("r", 15)
+                        .attr("opacity", 0)
+                        .remove();
+                }, particleCount * 300 + 1500);
+            }
+
+            addAttackTooltips(threat, sourceCoords, targetCoords) {
+                const svg = d3.select("#d3-world-map");
+                const projection = d3.geoMercator()
+                    .scale((svg.node().clientWidth + 1) / 2 / Math.PI)
+                    .translate([svg.node().clientWidth / 2, svg.node().clientHeight / 1.5]);
+
+                // Convert coordinates to pixel positions
+                const sourcePos = projection(sourceCoords);
+                const targetPos = projection(targetCoords);
+
+                // Add source tooltip trigger
+                const sourceMarker = svg.append("circle")
+                    .attr("cx", sourcePos[0])
+                    .attr("cy", sourcePos[1])
+                    .attr("r", 5)
+                    .attr("fill", this.getThreatColor(threat.type))
+                    .attr("opacity", 0.7)
+                    .attr("stroke", "#fff")
+                    .attr("stroke-width", 1)
+                    .style("cursor", "pointer");
+
+                // Add target tooltip trigger
+                const targetMarker = svg.append("circle")
+                    .attr("cx", targetPos[0])
+                    .attr("cy", targetPos[1])
+                    .attr("r", 6)
+                    .attr("fill", "#dc2626")
+                    .attr("opacity", 0.9)
+                    .attr("stroke", "#fff")
+                    .attr("stroke-width", 1)
+                    .style("cursor", "pointer");
+
+                // Add event listeners for tooltips
+                sourceMarker.on("mouseover", (event) => {
+                    this.showTooltip(event, { ...threat, isSource: true });
+                }).on("mouseout", () => {
+                    this.hideTooltip();
+                });
+
+                targetMarker.on("mouseover", (event) => {
+                    this.showTooltip(event, threat);
+                }).on("mouseout", () => {
+                    this.hideTooltip();
+                });
+
+                // Remove markers after animation
+                setTimeout(() => {
+                    sourceMarker.remove();
+                    targetMarker.remove();
+                }, 12000);
+            }
+
+            highlightCountries(threat) {
+                // This would highlight countries on the SVG map
+                // For now, we'll add visual indicators
+                const sourceCountryCode = threat.source.code;
+                const targetCountryCode = threat.target.code;
+
+                // You could add country highlighting logic here
+                console.log(`Attack: ${sourceCountryCode} → ${targetCountryCode}`);
+            }
+
+            showTooltip(e, threat) {
+                const tooltip = document.getElementById('tooltip');
+                const isSource = threat.isSource;
+
+                // Enhanced tooltip with more professional styling
+                tooltip.innerHTML = `
+                    <div style="border-left: 3px solid ${this.getThreatColor(threat.type)}; padding-left: 8px; background: rgba(0, 0, 0, 0.9); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); border-radius: 6px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                            <div style="width: 10px; height: 10px; border-radius: 50%; background: ${this.getThreatColor(threat.type)}; margin-right: 6px;"></div>
+                            <strong style="color: ${this.getThreatColor(threat.type)}; font-size: 13px;">${threat.type.toUpperCase()} ${isSource ? 'SOURCE' : 'TARGET'}</strong>
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.5;">
+                            <span style="color: #f97316; font-weight: bold;">Origin:</span> ${threat.source.name}<br>
+                            <span style="color: #ef4444; font-weight: bold;">Target:</span> ${threat.target.name}<br>
+                            <span style="color: #8b5cf6; font-weight: bold;">Severity:</span> ${threat.severity.toUpperCase()}<br>
+                            <span style="color: #06b6d4; font-weight: bold;">Time:</span> ${threat.timestamp.toLocaleTimeString()}<br>
+                            <div style="margin-top: 5px; font-size: 11px; color: #9ca3af; max-width: 220px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                                ${threat.description}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Handle both regular mouse events and D3.js events
+                let pageX, pageY;
+
+                if (e.sourceEvent) {
+                    // D3.js event
+                    pageX = e.sourceEvent.pageX || e.sourceEvent.clientX;
+                    pageY = e.sourceEvent.pageY || e.sourceEvent.clientY;
+                } else {
+                    // Regular mouse event
+                    pageX = e.pageX || e.clientX;
+                    pageY = e.pageY || e.clientY;
+                }
+
+                tooltip.style.left = (pageX + 15) + 'px';
+                tooltip.style.top = (pageY - 10) + 'px';
+                tooltip.style.opacity = '1';
+                tooltip.style.zIndex = '1000';
+            }
+
+            getThreatColor(threatType) {
+                const colors = {
+                    'DDoS': '#ef4444',
+                    'Malware': '#f59e0b',
+                    'APT': '#8b5cf6',
+                    'DoS': '#ec4899',
+                    'Phishing': '#06b6d4',
+                    'Ransomware': '#10b981',
+                    'Botnet': '#6366f1'
+                };
+                return colors[threatType] || '#6b7280';
+            }
+
+            hideTooltip() {
+                document.getElementById('tooltip').style.opacity = '0';
+            }
+
+            updateThreatDisplay() {
+                const threatList = document.getElementById('threat-list');
+                threatList.innerHTML = '';
+
+                // Get only active threats (critical or high severity) and limit to 5 in FIFO order
+                const activeThreats = this.threats
+                    .filter(t => t.severity === 'critical' || t.severity === 'high')
+                    .slice(0, 5);
+
+                activeThreats.forEach(threat => {
+                    const item = document.createElement('li');
+                    item.className = `threat-item ${threat.severity}`;
+                    item.innerHTML = `
+                        <div class="type">${threat.type}</div>
+                        <div class="location">${threat.source.name} → ${threat.target.name}</div>
+                        <div class="location">${threat.description}</div>
+                        <div class="timestamp">Detected: ${threat.timestamp.toLocaleTimeString()}</div>
+                    `;
+                    threatList.appendChild(item);
+                });
+            }
+
+            addAlert(threat) {
+                const alert = {
+                    id: Date.now(),
+                    message: `${threat.type} attack detected from ${threat.source.name} targeting ${threat.target.name}`,
+                    timestamp: new Date(),
+                    severity: threat.severity
+                };
+
+                this.alerts.unshift(alert);
+                if (this.alerts.length > 20) this.alerts.pop();
+
+                this.updateAlertsDisplay();
+            }
+
+            updateAlertsDisplay() {
+                const alertsFeed = document.getElementById('alerts-feed');
+                alertsFeed.innerHTML = '';
+
+                this.alerts.slice(0, 8).forEach(alert => {
+                    const item = document.createElement('div');
+                    item.className = 'alert-item';
+                    item.innerHTML = `
+                        <div>${alert.message}</div>
+                        <div class="alert-time">${alert.timestamp.toLocaleTimeString()}</div>
+                    `;
+                    alertsFeed.appendChild(item);
+                });
+            }
+
+            updateStats() {
+                this.stats.totalThreats = this.threats.length;
+                this.stats.blockedAttacks = Math.floor(this.stats.totalThreats * 0.8);
+                this.stats.activeIncidents = this.threats.filter(t =>
+                    t.severity === 'critical' || t.severity === 'high'
+                ).length;
+                this.stats.affectedCountries = new Set(
+                    this.threats.map(t => t.target.name)
+                ).size;
+
+                document.getElementById('total-threats').textContent = this.stats.totalThreats;
+                document.getElementById('blocked-attacks').textContent = this.stats.blockedAttacks;
+                document.getElementById('active-incidents').textContent = this.stats.activeIncidents;
+                document.getElementById('affected-countries').textContent = this.stats.affectedCountries;
+            }
+
+            startRealTimeSimulation() {
+                // Add new threats every 3-8 seconds
+                setInterval(() => {
+                    const threat = this.addRandomThreat();
+                    this.addAlert(this.threats[0]);
+                }, Math.random() * 5000 + 3000);
+
+                // Update threat feed
+                setInterval(() => {
+                    this.updateThreatFeed();
+                }, 2000);
+            }
+
+            updateThreatFeed() {
+                const feed = document.getElementById('threat-feed');
+                const recentThreat = this.threats[0];
+
+                if (recentThreat) {
+                    feed.innerHTML = `
+                        <div style="font-size: 12px; color: #9ca3af; margin-bottom: 10px;">
+                            Latest Intelligence: ${new Date().toLocaleTimeString()}
+                        </div>
+                        <div style="color: #ef4444; font-weight: bold; margin-bottom: 5px;">
+                            ${recentThreat.type.toUpperCase()} DETECTED
+                        </div>
+                        <div style="font-size: 13px; margin-bottom: 8px;">
+                            ${recentThreat.description}
+                        </div>
+                        <div style="font-size: 11px; color: #6b7280;">
+                            Origin: ${recentThreat.source.name} | Target: ${recentThreat.target.name}
+                        </div>
+                    `;
+                }
+            }
+
+            setupEventListeners() {
+                // Add click handlers for threat items
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.threat-item')) {
+                        // Could integrate with detailed threat analysis
+                        console.log('Threat item clicked');
+                    }
+                });
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new CTIDashboard();
+        });
+    </script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const svg = d3.select("#d3-world-map");
+        const container = document.getElementById("world-map");
+        const width = container.offsetWidth;
+        const height = container.offsetHeight;
+
+        // Use Mercator projection for a more professional look
+        const projection = d3.geoMercator()
+            .scale((width + 1) / 2 / Math.PI)
+            .translate([width / 2, height / 1.5]);
+
+        const path = d3.geoPath().projection(projection);
+
+        // Create a gradient for the ocean
+        const defs = svg.append("defs");
+        const oceanGradient = defs.append("linearGradient")
+            .attr("id", "ocean-gradient")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "100%");
+
+        oceanGradient.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", "#0c1629");
+
+        oceanGradient.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "#0a192f");
+
+        // Add ocean background
+        svg.append("rect")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("fill", "url(#ocean-gradient)");
+
+        // Add grid lines
+        const graticule = d3.geoGraticule();
+        svg.append("path")
+            .datum(graticule)
+            .attr("class", "grid-lines")
+            .attr("d", path);
+
+        // Load and render the world map
+        d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(worldData => {
+            const countries = topojson.feature(worldData, worldData.objects.countries).features;
+
+            // Add countries
+            svg.selectAll(".country")
+                .data(countries)
+                .enter().append("path")
+                .attr("d", path)
+                .attr("class", "country")
+                .attr("id", d => `country-${d.id}`)
+                .on("mouseover", function() {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .style("fill", "#2563eb");
+                })
+                .on("mouseout", function() {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .style("fill", "#1e293b");
+                });
+
+            // Add country borders
+            svg.append("path")
+                .datum(topojson.mesh(worldData, worldData.objects.countries, (a, b) => a !== b))
+                .attr("class", "country-borders")
+                .attr("d", path)
+                .attr("fill", "none")
+                .attr("stroke", "#3b82f6")
+                .attr("stroke-width", "0.5")
+                .attr("stroke-linejoin", "round");
+        });
+    });
+    </script>
+
+</body>
+</html>

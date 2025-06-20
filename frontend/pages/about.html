@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - DecipherInfoSec.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="flex flex-col min-h-screen bg-gray-50">
+<!-- Header -->
+<header class="bg-gray-900 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <img src="assets/logo.svg" alt="DecipherInfoSec. Logo" class="h-10 w-10">
+            <span class="font-bold text-xl">DecipherInfoSec.</span>
+        </div>
+        <nav class="hidden md:flex space-x-6">
+            <a href="/frontend/index.html" class="hover:text-blue-400 transition">Home</a>
+            <a href="about.html" class="text-blue-400 font-medium">About Us</a>
+            <a href="how-it-works.html" class="hover:text-blue-400 transition">How It Works</a>
+            <a href="courses.html" class="hover:text-blue-400 transition">Courses</a>
+        </nav>
+        <div class="flex items-center space-x-4">
+            <a href="login.html" class="hover:text-blue-400 transition">Login</a>
+            <a href="cart.html" class="relative">
+                <i class="fas fa-shopping-cart text-xl hover:text-blue-400 transition"></i>
+                <span class="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" x-data="{ count: 0 }" x-text="count">0</span>
+            </a>
+        </div>
+        <button class="md:hidden" x-data="{open: false}" @click="open = !open">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </div>
+    <!-- Mobile menu would go here with Alpine.js toggle -->
+</header>
+
+<!-- Main Content -->
+<main class="flex-grow container mx-auto px-4 py-8">
+    <section class="max-w-4xl mx-auto mb-12">
+        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">About DecipherInfoSec.</h1>
+
+        <div class="bg-white shadow-lg rounded-lg p-8 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Our Mission</h2>
+            <p class="text-gray-700 mb-6">
+                DecipherInfoSec. is dedicated to accelerating cybersecurity education through a comprehensive,
+                interactive learning platform. We aim to bridge the skills gap in the cybersecurity industry
+                by providing focused, certification-oriented training that prepares professionals and students
+                for success in just three months.
+            </p>
+
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Who We Are</h2>
+            <p class="text-gray-700 mb-6">
+                Founded by cybersecurity experts and educational technologists, DecipherInfoSec. combines
+                cutting-edge learning methodologies with practical, hands-on experiences. Our team consists
+                of industry professionals, certified instructors, and educational designers who understand
+                the rapidly evolving landscape of cybersecurity.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-white shadow-lg rounded-lg p-8">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">What Sets Us Apart</h2>
+                <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                    <li>Industry-aligned curriculum focused on current threats and technologies</li>
+                    <li>Practical, hands-on labs that simulate real-world scenarios</li>
+                    <li>Accelerated learning paths for major certifications (Security+, CEH, CISSP)</li>
+                    <li>Interactive learning experiences that engage and challenge students</li>
+                    <li>Direct mentorship from experienced cybersecurity professionals</li>
+                </ul>
+            </div>
+
+            <div class="bg-white shadow-lg rounded-lg p-8">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Our Commitment</h2>
+                <p class="text-gray-700 mb-4">
+                    We are committed to:
+                </p>
+                <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                    <li>Keeping our curriculum updated with emerging threats and technologies</li>
+                    <li>Providing accessible education to diverse learners</li>
+                    <li>Supporting students throughout their certification journey</li>
+                    <li>Building a community of cybersecurity professionals</li>
+                    <li>Maintaining the highest standards of educational quality</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-12 text-center">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800">Ready to Start Your Cybersecurity Journey?</h2>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="courses.html" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                    Explore Courses
+                </a>
+                <a href="contact.html" class="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition">
+                    Contact Us
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-8">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <img src="assets/logo.svg" alt="DecipherInfoSec. Logo" class="h-8 w-8">
+                    <span class="font-bold text-lg">DecipherInfoSec.</span>
+                </div>
+                <p class="text-gray-400">
+                    Accelerating cybersecurity education with comprehensive, interactive learning.
+                </p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg mb-4">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="../../frontend/index.html" class="text-gray-400 hover:text-white transition">Home</a></li>
+                    <li><a href="about.html" class="text-gray-400 hover:text-white transition">About Us</a></li>
+                    <li><a href="how-it-works.html" class="text-gray-400 hover:text-white transition">How It Works</a></li>
+                    <li><a href="courses.html" class="text-gray-400 hover:text-white transition">Courses</a></li>
+                    <li><a href="terms.html" class="text-gray-400 hover:text-white transition">Terms & Conditions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg mb-4">Connect With Us</h3>
+                <div class="flex space-x-4 mb-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                </div>
+                <p class="text-gray-400">
+                    Subscribe to our newsletter for updates
+                </p>
+                <form class="mt-2 flex">
+                    <input type="email" placeholder="Your email" class="px-3 py-2 bg-gray-800 text-gray-200 rounded-l-lg focus:outline-none">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-r-lg transition">
+                        Subscribe
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400">
+            <p>&copy; 2023 DecipherInfoSec.. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

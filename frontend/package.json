@@ -1,0 +1,21 @@
+{
+  "name": "cybered-pro-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for DecipherInfoSec Cybersecurity Learning Platform",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -s . -l 3200",
+    "dev": "serve -s . -l 3200 --cors",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cybersecurity",
+    "education",
+    "learning"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}

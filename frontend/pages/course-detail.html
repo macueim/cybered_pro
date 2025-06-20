@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Details - CyberEd Pro</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Custom Styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        },
+                        secondary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                            950: '#2e1065',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen flex flex-col bg-gray-50">
+<!-- Header (Same as previous pages) -->
+<header class="bg-white shadow-md">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2">
+            <img src="/assets/images/logo.svg" alt="CyberEd Pro Logo" class="h-10 w-auto">
+            <span class="text-2xl font-bold text-primary-700">CyberEd Pro</span>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="hidden md:flex space-x-6">
+            <a href="/" class="text-gray-700 hover:text-primary-600 font-medium">Home</a>
+            <a href="/about" class="text-gray-700 hover:text-primary-600 font-medium">About Us</a>
+            <a href="/how-it-works" class="text-gray-700 hover:text-primary-600 font-medium">How It Works</a>
+            <a href="/courses" class="text-gray-700 hover:text-primary-600 font-medium">Courses</a>
+        </nav>
+
+        <!-- User Actions -->
+        <div class="flex items-center space-x-4">
+            <a href="/login" class="text-gray-700 hover:text-primary-600 font-medium">Login</a>
+            <a href="/cart" class="relative text-gray-700 hover:text-primary-600">
+                <i class="fas fa-shopping-cart text-xl"></i>
+                <span x-data="{ get cartCount() { return Alpine.store('cart').count } }"
+                      x-text="cartCount"
+                      class="absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                      x-show="cartCount > 0"
+                      x-cloak></span>
+            </a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button class="md:hidden text-gray-700" x-data="{ isOpen: false }" @click="isOpen = !isOpen">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="md:hidden" x-data="{ isOpen: false }" x-show="isOpen" x-cloak>
+        <div class="px-4 py-2 space-y-2">
+            <a href="/" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Home</a>
+            <a href="/about" class="block text-gray-700 hover:text-primary-600 font-medium py-2">About Us</a>
+            <a href="/how-it-works" class="block text-gray-700 hover:text-primary-600 font-medium py-2">How It Works</a>
+            <a href="/courses" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Courses</a>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-grow" x-data="{
+        courseId: window.location.pathname.split('/').pop(),
+        course: null,
+        modules: [],
+        activeTab: 'overview',
+        loading: true,
+
+        init() {
+            this.fetchCourseDetails();
+        },
+
+        async fetchCourseDetails() {
+            try {
+                const response = await fetch(`/api/v1/courses/${this.courseId}`);
+                this.course = await response.json();
+                this.fetchModules();
+            } catch (error) {
+                console.error('Error fetching course details:', error);
+                // Fallback with sample data for demo
+                this.course = {
+                    id: 1,
+                    title: 'CompTIA Security+ Certification',
+                    description: 'Prepare for the CompTIA Security+ certification with this comprehensive course covering all exam objectives including network security, compliance and operational security, threats and vulnerabilities, application, data and host security, access control and identity management, and cryptography.',
+                    certification_type: 'Security+',
+                    difficulty_level: 'beginner',
+                    estimated_duration: 80,
+                    price: 199.99,
+                    instructor: {
+                        id: 1,
+                        name: 'Dr. Jane Smith',
+                        title: 'Cybersecurity Expert',
+                        bio: 'With over 15 years of industry experience and multiple certifications including CISSP, CEH, and Security+, Dr. Smith has trained thousands of security professionals.'
+                    }
+                };
+                this.loading = false;
+            }
+        },
+
+        async fetchModules() {
+            try {
+                const response = await fetch(`/api/v1/courses/${this.courseId}/modules`);
+                this.modules = await response.json();
+                this.loading = false;
+            } catch (error) {
+                console.error('Error fetching modules:', error);
+                // Fallback with sample data for demo
+                this.modules = [
+                    {
+                        id: 1,
+                        title: 'Introduction to Security Concepts',
+                        description: 'Foundational security concepts and principles',
+                        order_index: 1,
+                        lessons: [
+                            { id: 1, title: 'Security Fundamentals', content_type: 'video' },
+                            { id: 2, title: 'Security Controls', content_type: 'text' },
+                            { id: 3, title: 'Risk Management', content_type: 'interactive' }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        title: 'Network Security',
+                        description: 'Network security technologies and tools',
+                        order_index: 2,
+                        lessons: [
+                            { id: 4, title: 'Network Protocols and Vulnerabilities', content_type: 'video' },
+                            { id: 5, title: 'Implementing Secure Networks', content_type: 'text' },
+                            { id: 6, title: 'Network Monitoring and Analysis', content_type: 'interactive' }
+                        ]
+                    },
+                    {
+                        id: 3,
+                        title: 'Threats and Vulnerabilities',
+                        description: 'Common threats, attacks, and vulnerabilities',
+                        order_index: 3,
+                        lessons: [
+                            { id: 7, title: 'Social Engineering', content_type: 'video' },
+                            { id: 8, title: 'Application Attacks', content_type: 'text' },
+                            { id: 9, title: 'Vulnerability Scanning', content_type: 'interactive' }
+                        ]
+                    }
+                ];
+                this.loading = false;
+            }
+        }
+    }">
+    <!-- Loading State -->
+    <div x-show="loading" class="text-center py-12">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-primary-600"></i>
+        <p class="mt-4 text-gray-600">Loading course details...</p>
+    </div>
+
+    <!-- Course Header -->
+    <section x-show="!loading" class="bg-primary-700 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row">
+                <div class="md:w-2/3">
+                    <h1 class="text-3xl md:text-4xl font-bold mb-4" x-text="course.title"></h1>
+                    <div class="flex items-center mb-4">
+                        <span class="bg-white text-primary-700 text-sm font-semibold px-3 py-1 rounded mr-3" x-text="course.certification_type"></span>
+                        <span class="flex items-center">
+                                <i class="fas fa-signal mr-1"></i>
+                                <span class="capitalize" x-text="course.difficulty_level"></span>
+                            </span>
+                        <span class="mx-3">|</span>
+                        <span class="flex items-center">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span x-text="course.estimated_duration + ' hours'"></span>
+                            </span>
+                    </div>
+                    <p class="text-lg mb-6" x-text="course.description"></p>
+                    <div class="flex items-center">
+                        <img x-bind:src="course.instructor?.avatar || '/assets/images/instructor-placeholder.jpg'" alt="Instructor" class="h-12 w-12 rounded-full object-cover mr-3">
+                        <div>
+                            <p class="font-semibold" x-text="course.instructor?.name || 'Expert Instructor'"></p>
+                            <p class="text-sm" x-text="course.instructor?.title || 'Cybersecurity Professional'"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-1/3 mt-8 md:mt-0">
+                    <div class="bg-white text-gray-800 rounded-lg p-6 shadow-lg">
+                        <p class="text-3xl font-bold text-primary-700 mb-4" x-text="'$' + (course.price || '199.99')"></p>
+                        <ul class="mb-6 space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span>Full course access</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span>Hands-on labs included</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span>Certificate of completion</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span>6 months access</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span>Mobile & desktop access</span>
+                            </li>
+                        </ul>
+                        <button @click="Alpine.store('cart').addItem(course)" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg mb-3">
+                            Add to Cart
+                        </button>
+                        <button class="w-full bg-secondary-600 hover:bg-secondary-700 text-white font-bold py-3 px-4 rounded-lg">
+                            Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Course Content -->
+    <section x-show="!loading" class="py-12">
+        <div class="container mx-auto px-4">
+            <!-- Tabs -->
+            <div class="mb-8 border-b border-gray-200">
+                <ul class="flex flex-wrap -mb-px">
+                    <li class="mr-2">
+                        <button @click="activeTab = 'overview'"
+                                class="inline-block py-4 px-4 text-sm font-medium text-center rounded-t-lg"
+                                :class="activeTab === 'overview' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-600 hover:border-gray-300'">
+                            Overview
+                        </button>
+                    </li>
+                    <li class="mr-2">
+                        <button @click="activeTab = 'curriculum'"
+                                class="inline-block py-4 px-4 text-sm font-medium text-center rounded-t-lg"
+                                :class="activeTab === 'curriculum' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-600 hover:border-gray-300'">
+                            Curriculum
+                        </button>
+                    </li>
+                    <li class="mr-2">
+                        <button @click="activeTab = 'instructor'"
+                                class="inline-block py-4 px-4 text-sm font-medium text-center rounded-t-lg"
+                                :class="activeTab === 'instructor' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-600 hover:border-gray-300'">
+                            Instructor
+                        </button>
+                    </li>
+                    <li class="mr-2">
+                        <button @click="activeTab = 'reviews'"
+                                class="inline-block py-4 px-4 text-sm font-medium text-center rounded-t-lg"
+                                :class="activeTab === 'reviews' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-600 hover:border-gray-300'">
+                            Reviews
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <!-- Overview Tab -->
+                <div x-show="activeTab === 'overview'">
+                    <h2 class="text-2xl font-bold mb-4">About This Course</h2>
+                    <p class="mb-4" x-text="course.description"></p>
+
+                    <h3 class="text-xl font-bold mt-8 mb-4">What You'll Learn</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Network security components and implementation</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Risk management processes and concepts</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Cryptography and PKI fundamentals</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Identity and access management principles</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Security policies and compliance requirements</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span>Hands-on security tools implementation</span>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-bold mt-8 mb-4">Course Requirements</h3>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>Basic understanding of networking concepts</li>
+                        <li>Familiarity with operating systems (Windows, Linux)</li>
+                        <li>No prior security experience required for beginner courses</li>
+                    </ul>
+
+                    <h3 class="text-xl font-bold mt-8 mb-4">Who This Course is For</h3>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>IT professionals looking to move into cybersecurity</li>
+                        <li>Network administrators seeking security certification</li>
+                        <li>Security enthusiasts wanting to formalize their knowledge</li>
+                        <li>Career changers entering the cybersecurity field</li>
+                    </ul>
+                </div>
+
+                <!-- Curriculum Tab -->
+                <div x-show="activeTab === 'curriculum'">
+                    <h2 class="text-2xl font-bold mb-6">Course Curriculum</h2>
+
+                    <div class="space-y-4" x-data="{ openModule: null }">
+                        <template x-for="(module, index) in modules" :key="module.id">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button @click="openModule = openModule === index ? null : index" class="w-full flex items-center justify-between bg-gray-50 p-4 hover:bg-gray-100">
+                                    <div class="flex items-center">
+                                        <span class="font-semibold mr-2" x-text="`Module ${index + 1}:`"></span>
+                                        <span x-text="module.title"></span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-sm text-gray-500 mr-3" x-text="`${module.lessons?.length || 0} lessons`"></span>
+                                        <i :class="openModule === index ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-gray-500"></i>
+                                    </div>
+                                </button>
+
+                                <div x-show="openModule === index" class="p-4 border-t border-gray-200">
+                                    <p class="text-gray-600 mb-4" x-text="module.description"></p>
+
+                                    <ul class="space-y-2">
+                                        <template x-for="(lesson, lessonIndex) in module.lessons" :key="lesson.id">
+                                            <li class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                                <div class="flex items-center">
+                                                    <span class="h-6 w-6 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 text-xs mr-3" x-text="lessonIndex + 1"></span>
+                                                    <span x-text="lesson.title"></span>
+                                                </div>
+                                                <div class="flex items-center">
+                                                    <span class="text-xs font-medium rounded-full px-2 py-0.5 bg-primary-100 text-primary-800 capitalize" x-text="lesson.content_type"></span>
+                                                    <i class="fas fa-lock text-gray-500 ml-3"></i>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Instructor Tab -->
+                <div x-show="activeTab === 'instructor'">
+                    <div class="flex flex-col md:flex-row items-start">
+                        <div class="md:w-1/3 mb-6 md:mb-0">
+                            <img x-bind:src="course.instructor?.avatar || '/assets/images/instructor-placeholder.jpg'" alt="Instructor" class="w-full h-auto rounded-lg shadow-md">
+                        </div>
+                        <div class="md:w-2/3 md:pl-8">
+                            <h2 class="text-2xl font-bold mb-2" x-text="course.instructor?.name || 'Dr. Jane Smith'"></h2>
+                            <p class="text-gray-600 mb-4" x-text="course.instructor?.title || 'Cybersecurity Expert'"></p>
+
+                            <div class="flex items-center mb-6">
+                                <div class="flex text-yellow-400 mr-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="text-gray-600">4.8 Instructor Rating</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-2xl font-bold text-primary-700">25+</p>
+                                    <p class="text-sm text-gray-600">Courses</p>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-2xl font-bold text-primary-700">15k+</p>
+                                    <p class="text-sm text-gray-600">Students</p>
+                                </div>
+                            </div>
+
+                            <p class="text-gray-700 mb-4" x-text="course.instructor?.bio || 'With over 15 years of industry experience and multiple certifications including CISSP, CEH, and Security+, Dr. Smith has trained thousands of security professionals.'"></p>
+
+                            <div class="flex space-x-4">
+                                <a href="#" class="text-gray-500 hover:text-primary-600">
+                                    <i class="fab fa-linkedin text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-500 hover:text-primary-600">
+                                    <i class="fab fa-twitter text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-500 hover:text-primary-600">
+                                    <i class="fas fa-globe text-xl"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div x-show="activeTab === 'reviews'">
+                    <div class="flex flex-col md:flex-row">
+                        <div class="md:w-1/3 mb-6 md:mb-0">
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <div class="text-center">
+                                    <p class="text-5xl font-bold text-primary-700">4.8</p>
+                                    <div class="flex justify-center text-yellow-400 my-2">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                    <p class="text-gray-600">Course Rating</p>
+                                </div>
+
+                                <div class="mt-6 space-y-2">
+                                    <div class="flex items-center">
+                                        <span class="text-sm w-12">5 stars</span>
+                                        <div class="flex-1 h-2 mx-2 bg-gray-200 rounded-full">
+                                            <div class="h-2 bg-yellow-400 rounded-full" style="width: 75%"></div>
+                                        </div>
+                                        <span class="text-sm w-12 text-right">75%</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-sm w-12">4 stars</span>
+                                        <div class="flex-1 h-2 mx-2 bg-gray-200 rounded-full">
+                                            <div class="h-2 bg-yellow-400 rounded-full" style="width: 20%"></div>
+                                        </div>
+                                        <span class="text-sm w-12 text-right">20%</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-sm w-12">3 stars</span>
+                                        <div class="flex-1 h-2 mx-2 bg-gray-200 rounded-full">
+                                            <div class="h-2 bg-yellow-400 rounded-full" style="width: 5%"></div>
+                                        </div>
+                                        <span class="text-sm w-12 text-right">5%</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-sm w-12">2 stars</span>
+                                        <div class="flex-1 h-2 mx-2 bg-gray-200 rounded-full">
+                                            <div class="h-2 bg-yellow-400 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span class="text-sm w-12 text-right">0%</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-sm w-12">1 star</span>
+                                        <div class="flex-1 h-2 mx-2 bg-gray-200 rounded-full">
+                                            <div class="h-2 bg-yellow-400 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span class="text-sm w-12 text-right">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md:w-2/3 md:pl-8">
+                            <h3 class="text-xl font-bold mb-4">Student Reviews</h3>
+
+                            <div class="space-y-6">
+                                <!-- Review 1 -->
+                                <div class="border-b border-gray-200 pb-6">
+                                    <div class="flex items-center mb-2">
+                                        <img src="/assets/images/review-1.jpg" alt="Student" class="h-10 w-10 rounded-full object-cover mr-3">
+                                        <div>
+                                            <p class="font-semibold">Robert Chen</p>
+                                            <p class="text-sm text-gray-500">2 months ago</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex text-yellow-400 mb-2">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <p class="text-gray-700">This course exceeded my expectations. The hands-on labs were particularly valuable, and I was able to pass my Security+ exam on the first try thanks to the comprehensive material.</p>
+                                </div>
+
+                                <!-- Review 2 -->
+                                <div class="border-b border-gray-200 pb-6">
+                                    <div class="flex items-center mb-2">
+                                        <img src="/assets/images/review-2.jpg" alt="Student" class="h-10 w-10 rounded-full object-cover mr-3">
+                                        <div>
+                                            <p class="font-semibold">Emily Washington</p>
+                                            <p class="text-sm text-gray-500">1 month ago</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex text-yellow-400 mb-2">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                    <p class="text-gray-700">The instructor was knowledgeable and engaging. I appreciate how the complex topics were broken down into manageable chunks. The practice questions were very similar to what I encountered on the actual exam.</p>
+                                </div>
+
+                                <!-- Review 3 -->
+                                <div>
+                                    <div class="flex items-center mb-2">
+                                        <img src="/assets/images/review-3.jpg" alt="Student" class="h-10 w-10 rounded-full object-cover mr-3">
+                                        <div>
+                                            <p class="font-semibold">Marcus Johnson</p>
+                                            <p class="text-sm text-gray-500">3 weeks ago</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex text-yellow-400 mb-2">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                    </div>
+                                    <p class="text-gray-700">Great course with detailed explanations. The virtual labs were a bit slow at times, but overall the content was excellent. I'd definitely recommend this to anyone preparing for the Security+ certification.</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-8">
+                                <button class="text-primary-600 hover:text-primary-700 font-medium">
+                                    See All Reviews
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Courses -->
+    <section x-show="!loading" class="py-12 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-2xl font-bold mb-8">Related Courses</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Related Course 1 -->
+                <div class="bg-white rounded-lg overflow-hidden shadow-md transition-transform hover:shadow-lg hover:-translate-y-1">
+                    <img src="/assets/images/course-2.jpg" alt="CEH Certification" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-bold">Certified Ethical Hacker (CEH)</h3>
+                            <span class="bg-primary-100 text-primary-800 text-xs font-semibold px-2.5 py-0.5 rounded">CEH</span>
+                        </div>
+                        <p class="text-gray-600 mb-4 line-clamp-2">Master the tools and techniques used by ethical hackers and security professionals.</p>
+                        <div class="flex justify-between items-center">
+                                <span class="text-gray-700 font-medium">
+                                    <i class="fas fa-clock text-primary-500 mr-1"></i>
+                                    <span>100 hours</span>
+                                </span>
+                            <span class="text-gray-700 font-medium capitalize">
+                                    <i class="fas fa-signal text-primary-500 mr-1"></i>
+                                    <span>intermediate</span>
+                                </span>
+                        </div>
+                        <div class="mt-6 flex justify-between items-center">
+                            <span class="text-2xl font-bold text-primary-700">$349.99</span>
+                            <a href="/courses/2" class="bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded">
+                                View Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Course 2 -->
+                <div class="bg-white rounded-lg overflow-hidden shadow-md transition-transform hover:shadow-lg hover:-translate-y-1">
+                    <img src="/assets/images/course-3.jpg" alt="CISSP Certification" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-bold">CISSP Certification Preparation</h3>
+                            <span class="bg-primary-100 text-primary-800 text-xs font-semibold px-2.5 py-0.5 rounded">CISSP</span>
+                        </div>
+                        <p class="text-gray-600 mb-4 line-clamp-2">Comprehensive preparation for the Certified Information Systems Security Professional exam.</p>
+                        <div class="flex justify-between items-center">
+                                <span class="text-gray-700 font-medium">
+                                    <i class="fas fa-clock text-primary-500 mr-1"></i>
+                                    <span>120 hours</span>
+                                </span>
+                            <span class="text-gray-700 font-medium capitalize">
+                                    <i class="fas fa-signal text-primary-500 mr-1"></i>
+                                    <span>advanced</span>
+                                </span>
+                        </div>
+                        <div class="mt-6 flex justify-between items-center">
+                            <span class="text-2xl font-bold text-primary-700">$499.99</span>
+                            <a href="/courses/3" class="bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded">
+                                View Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Course 3 -->
+                <div class="bg-white rounded-lg overflow-hidden shadow-md transition-transform hover:shadow-lg hover:-translate-y-1">
+                    <img src="/assets/images/course-4.jpg" alt="Network Security Fundamentals" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-bold">Network Security Fundamentals</h3>
+                            <span class="bg-primary-100 text-primary-800 text-xs font-semibold px-2.5 py-0.5 rounded">Foundation</span>
+                        </div>
+                        <p class="text-gray-600 mb-4 line-clamp-2">Build a solid foundation in network security concepts, protocols, and implementation.</p>
+                        <div class="flex justify-between items-center">
+                                <span class="text-gray-700 font-medium">
+                                    <i class="fas fa-clock text-primary-500 mr-1"></i>
+                                    <span>60 hours</span>
+                                </span>
+                            <span class="text-gray-700 font-medium capitalize">
+                                    <i class="fas fa-signal text-primary-500 mr-1"></i>
+                                    <span>beginner</span>
+                                </span>
+                        </div>
+                        <div class="mt-6 flex justify-between items-center">
+                            <span class="text-2xl font-bold text-primary-700">$149.99</span>
+                            <a href="/courses/4" class="bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded">
+                                View Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer (Same as previous pages) -->
+<footer class="bg-gray-800 text-white py-8">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <!-- Company Info -->
+            <div>
+                <h3 class="text-xl font-bold mb-4">CyberEd Pro</h3>
+                <p class="text-gray-300">Accelerating your cybersecurity career with industry-leading certification courses.</p>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="/" class="text-gray-300 hover:text-white">Home</a></li>
+                    <li><a href="/courses" class="text-gray-300 hover:text-white">Courses</a></li>
+                    <li><a href="/about" class="text-gray-300 hover:text-white">About Us</a></li>
+                    <li><a href="/contact" class="text-gray-300 hover:text-white">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Legal -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Legal</h3>
+                <ul class="space-y-2">
+                    <li><a href="/terms" class="text-gray-300 hover:text-white">Terms & Conditions</a></li>
+                    <li><a href="/privacy" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="/refund" class="text-gray-300 hover:text-white">Refund Policy</a></li>
+                </ul>
+            </div>
+
+            <!-- Social Media -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Connect With Us</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="border-t border-gray-700 mt-8 pt-4 text-center text-gray-400">
+            &copy; 2023 CyberEd Pro. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- Alpine.js Global Store (Same as previous pages) -->
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('auth', {
+            isLoggedIn: false,
+            user: null,
+            token: null,
+
+            init() {
+                // Check if token exists in localStorage
+                const token = localStorage.getItem('token');
+                if (token) {
+                    this.token = token;
+                    this.isLoggedIn = true;
+                    // Fetch user data
+                    this.fetchUserData();
+                }
+            },
+
+            async fetchUserData() {
+                try {
+                    const response = await fetch('/api/v1/users/me', {
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`
+                        }
+                    });
+                    if (response.ok) {
+                        this.user = await response.json();
+                    } else {
+                        // Token might be invalid or expired
+                        this.logout();
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+            },
+
+            login(token, redirectTo = '/dashboard') {
+                this.token = token;
+                this.isLoggedIn = true;
+                localStorage.setItem('token', token);
+                this.fetchUserData();
+                window.location.href = redirectTo;
+            },
+
+            logout() {
+                this.token = null;
+                this.user = null;
+                this.isLoggedIn = false;
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
+        });
+
+        Alpine.store('cart', {
+            items: [],
+
+            init() {
+                // Load cart from localStorage
+                const savedCart = localStorage.getItem('cart');
+                if (savedCart) {
+                    this.items = JSON.parse(savedCart);
+                }
+            },
+
+            addItem(course) {
+                // Check if course already exists in cart
+                const exists = this.items.some(item => item.id === course.id);
+                if (!exists) {
+                    this.items.push(course);
+                    this.saveCart();
+                    // Show notification
+                    this.showNotification(`${course.title} added to cart!`);
+                } else {
+                    this.showNotification('This course is already in your cart', 'warning');
+                }
+            },
+
+            removeItem(courseId) {
+                this.items = this.items.filter(item => item.id !== courseId);
+                this.saveCart();
+            },
+
+            clearCart() {
+                this.items = [];
+                this.saveCart();
+            },
+
+            saveCart() {
+                localStorage.setItem('cart', JSON.stringify(this.items));
+            },
+
+            showNotification(message, type = 'success') {
+                // Simple notification implementation
+                const notification = document.createElement('div');
+                notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-md shadow-md ${
+                    type === 'success' ? 'bg-green-500' : 'bg-yellow-500'
+                } text-white`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            },
+
+            get count() {
+                return this.items.length;
+            },
+
+            get total() {
+                return this.items.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberEd Pro - Cybersecurity Learning Management System</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Custom Styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        },
+                        secondary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                            950: '#2e1065',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen flex flex-col bg-gray-50">
+<!-- Header will be included here -->
+<header class="bg-white shadow-md">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2">
+            <img src="assets/images/logo.svg" alt="CyberEd Pro Logo" class="h-10 w-auto">
+            <span class="text-2xl font-bold text-primary-700">CyberEd Pro</span>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="hidden md:flex space-x-6">
+            <a href="/" class="text-gray-700 hover:text-primary-600 font-medium">Home</a>
+            <a href="/about" class="text-gray-700 hover:text-primary-600 font-medium">About Us</a>
+            <a href="/how-it-works" class="text-gray-700 hover:text-primary-600 font-medium">How It Works</a>
+            <a href="/courses" class="text-gray-700 hover:text-primary-600 font-medium">Courses</a>
+        </nav>
+
+        <!-- User Actions -->
+        <div class="flex items-center space-x-4">
+            <a href="/login" class="text-gray-700 hover:text-primary-600 font-medium">Login</a>
+            <a href="/cart" class="relative text-gray-700 hover:text-primary-600">
+                <i class="fas fa-shopping-cart text-xl"></i>
+                <span x-data="{ cartCount: 0 }" x-text="cartCount" class="absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" x-show="cartCount > 0" x-cloak></span>
+            </a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button class="md:hidden text-gray-700" x-data="{ isOpen: false }" @click="isOpen = !isOpen">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="md:hidden" x-data="{ isOpen: false }" x-show="isOpen" x-cloak>
+        <div class="px-4 py-2 space-y-2">
+            <a href="/" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Home</a>
+            <a href="/about" class="block text-gray-700 hover:text-primary-600 font-medium py-2">About Us</a>
+            <a href="/how-it-works" class="block text-gray-700 hover:text-primary-600 font-medium py-2">How It Works</a>
+            <a href="/courses" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Courses</a>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-grow">
+    <!-- Content will be included here -->
+</main>
+
+<!-- Footer -->
+<footer class="bg-gray-800 text-white py-8">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <!-- Company Info -->
+            <div>
+                <h3 class="text-xl font-bold mb-4">CyberEd Pro</h3>
+                <p class="text-gray-300">Accelerating your cybersecurity career with industry-leading certification courses.</p>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="/" class="text-gray-300 hover:text-white">Home</a></li>
+                    <li><a href="/courses" class="text-gray-300 hover:text-white">Courses</a></li>
+                    <li><a href="/about" class="text-gray-300 hover:text-white">About Us</a></li>
+                    <li><a href="/contact" class="text-gray-300 hover:text-white">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Legal -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Legal</h3>
+                <ul class="space-y-2">
+                    <li><a href="/terms" class="text-gray-300 hover:text-white">Terms & Conditions</a></li>
+                    <li><a href="/privacy" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="/refund" class="text-gray-300 hover:text-white">Refund Policy</a></li>
+                </ul>
+            </div>
+
+            <!-- Social Media -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Connect With Us</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="border-t border-gray-700 mt-8 pt-4 text-center text-gray-400">
+            &copy; 2023 CyberEd Pro. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- Custom Scripts -->
+<script>
+    // Global app state and functions
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('auth', {
+            isLoggedIn: false,
+            user: null,
+            token: null,
+
+            init() {
+                // Check if token exists in localStorage
+                const token = localStorage.getItem('token');
+                if (token) {
+                    this.token = token;
+                    this.isLoggedIn = true;
+                    // Fetch user data
+                    this.fetchUserData();
+                }
+            },
+
+            async fetchUserData() {
+                try {
+                    const response = await fetch('/api/v1/users/me', {
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`
+                        }
+                    });
+                    if (response.ok) {
+                        this.user = await response.json();
+                    } else {
+                        // Token might be invalid or expired
+                        this.logout();
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+            },
+
+            login(token, redirectTo = '/dashboard') {
+                this.token = token;
+                this.isLoggedIn = true;
+                localStorage.setItem('token', token);
+                this.fetchUserData();
+                window.location.href = redirectTo;
+            },
+
+            logout() {
+                this.token = null;
+                this.user = null;
+                this.isLoggedIn = false;
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
+        });
+
+        Alpine.store('cart', {
+            items: [],
+
+            init() {
+                // Load cart from localStorage
+                const savedCart = localStorage.getItem('cart');
+                if (savedCart) {
+                    this.items = JSON.parse(savedCart);
+                }
+            },
+
+            addItem(course) {
+                // Check if course already exists in cart
+                const exists = this.items.some(item => item.id === course.id);
+                if (!exists) {
+                    this.items.push(course);
+                    this.saveCart();
+                }
+            },
+
+            removeItem(courseId) {
+                this.items = this.items.filter(item => item.id !== courseId);
+                this.saveCart();
+            },
+
+            clearCart() {
+                this.items = [];
+                this.saveCart();
+            },
+
+            saveCart() {
+                localStorage.setItem('cart', JSON.stringify(this.items));
+            },
+
+            get count() {
+                return this.items.length;
+            },
+
+            get total() {
+                return this.items.reduce((sum, item) => sum + (item.price || 0), 0);
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# render.yaml
+services:
+  - type: web
+    name: cybered-pro-api
+    env: python
+    buildCommand: cd backend && pip install -r requirements.txt && alembic upgrade head
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: POSTGRES_SERVER
+        fromDatabase:
+          name: cybered-pro-db
+          property: host
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: cybered-pro-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: cybered-pro-db
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: cybered-pro-db
+          property: database
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  - type: web
+    name: cybered-pro-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: API_URL
+        fromService:
+          name: cybered-pro-api
+          type: web
+          property: url
+
+databases:
+  - name: cybered-pro-db
+    plan: free

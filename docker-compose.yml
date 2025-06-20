@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: cybered_pro_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cybered_pro
+      POSTGRES_USER: cybered_admin
+      POSTGRES_PASSWORD: cyber_secure_pwd
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Uncomment this line if you want to initialize the database with your SQL script
+      # - ./cybered-pro_db.sql:/docker-entrypoint-initdb.d/cybered-pro_db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cybered_admin -d cybered_pro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: cybered_pro_postgres_data
