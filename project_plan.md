@@ -145,3 +145,6 @@ example of coures will be added to the website are, Security+, CEH, and CISSP.
 3. Create initial database schema
 4. Develop authentication system prototype
 5. Design and implement basic UI components
+
+
+1. Examine the project structure to understand the codebase organization2. Review the backend code:- Check the FastAPI setup and routes- Examine database models and schemas- Verify authentication and authorization mechanisms3. Review the frontend code:- Check HTML structure and navigation- Verify CSS and JavaScript integration- Ensure role-based access control is implemented correctly4. Identify and fix any issues in the backend5. Identify and fix any issues in the frontend6. Test the application to ensure it works as expected7. Document the changes made and provide recommendations for further improvements

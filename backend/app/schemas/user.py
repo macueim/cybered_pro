@@ -18,6 +18,11 @@ class UserCreate(UserBase):
     last_name: str
     role: str = "student"  # Default role is student
 
+# User login model
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
 # Properties to receive via API on update
 class UserUpdate(UserBase):
     password: Optional[str] = None

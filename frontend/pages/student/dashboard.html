@@ -493,26 +493,72 @@
             },
             async fetchStudentData() {
                 try {
-                    // In a real application, this would be an API call to /api/v1/users/me
-                    // For demo purposes, we're using the predefined data
+                    // Import API service
+                    const module = await import('../../js/api.js');
+                    const api = module.default;
+
+                    // Use API service to fetch user data
+                    const userData = await api.getCurrentUser();
+                    this.student = {
+                        name: `${userData.first_name} ${userData.last_name}`,
+                        email: userData.email,
+                        role: userData.role,
+                        id: userData.id
+                    };
                 } catch (error) {
                     console.error('Error fetching student data:', error);
                 }
             },
             async fetchEnrolledCourses() {
                 try {
-                    // In a real application, this would be an API call to /api/v1/enrollments/
-                    // For demo purposes, we're setting mock data
-                    setTimeout(() => {
-                        this.enrolledCourses = [
-                            { id: 1, title: 'CompTIA Security+', certification_type: 'Security+', progress: 65, completed_modules: 7, total_modules: 12 },
-                            { id: 2, title: 'Certified Ethical Hacker (CEH)', certification_type: 'CEH', progress: 30, completed_modules: 3, total_modules: 10 },
-                            { id: 3, title: 'Network Security Fundamentals', certification_type: 'Custom', progress: 10, completed_modules: 1, total_modules: 8 }
-                        ];
-                        this.calculateOverallProgress();
-                    }, 500);
+                    // Import API service
+                    const module = await import('../../js/api.js');
+                    const api = module.default;
+
+                    // Use API service to fetch enrollments
+                    const enrollments = await api.getEnrollments();
+
+                    // Process enrollments to get course details
+                    const enrolledCoursesPromises = enrollments.map(async (enrollment) => {
+                        const course = await api.getCourse(enrollment.course_id);
+
+                        // Get progress data from the progress endpoint
+                        let progress = 0;
+                        let completedModules = 0;
+                        let totalModules = course.modules ? course.modules.length : 0;
+
+                        try {
+                            const progressData = await fetch(`/api/v1/progress/courses/${course.id}`, {
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                            }).then(res => res.json());
+
+                            progress = progressData.progress_percentage || 0;
+                            completedModules = progressData.completed_modules || 0;
+                        } catch (error) {
+                            console.error(`Error fetching progress for course ${course.id}:`, error);
+                        }
+
+                        return {
+                            id: course.id,
+                            title: course.title,
+                            certification_type: course.certification_type || 'Custom',
+                            progress: progress,
+                            completed_modules: completedModules,
+                            total_modules: totalModules
+                        };
+                    });
+
+                    this.enrolledCourses = await Promise.all(enrolledCoursesPromises);
+                    this.calculateOverallProgress();
                 } catch (error) {
                     console.error('Error fetching enrolled courses:', error);
+                    // Fallback to mock data if API fails
+                    this.enrolledCourses = [
+                        { id: 1, title: 'CompTIA Security+', certification_type: 'Security+', progress: 65, completed_modules: 7, total_modules: 12 },
+                        { id: 2, title: 'Certified Ethical Hacker (CEH)', certification_type: 'CEH', progress: 30, completed_modules: 3, total_modules: 10 },
+                        { id: 3, title: 'Network Security Fundamentals', certification_type: 'Custom', progress: 10, completed_modules: 1, total_modules: 8 }
+                    ];
+                    this.calculateOverallProgress();
                 }
             },
             calculateOverallProgress() {
@@ -557,17 +603,34 @@
             },
             async fetchRecommendedCourses() {
                 try {
-                    // In a real application, this would be an API call
-                    // For demo purposes, we're setting mock data
-                    setTimeout(() => {
-                        this.recommendedCourses = [
-                            { id: 4, title: 'CISSP Certification', description: 'Prepare for the industry-leading information security certification', price: 299.99 },
-                            { id: 5, title: 'OSCP Preparation', description: 'Hands-on penetration testing and ethical hacking skills', price: 349.99 },
-                            { id: 6, title: 'Cloud Security Specialist', description: 'Master security for AWS, Azure, and Google Cloud', price: 249.99 }
-                        ];
-                    }, 500);
+                    // Import API service
+                    const module = await import('../../js/api.js');
+                    const api = module.default;
+
+                    // Use API service to fetch all courses
+                    const allCourses = await api.getCourses();
+
+                    // Filter out courses the student is already enrolled in
+                    const enrolledCourseIds = this.enrolledCourses.map(course => course.id);
+                    const notEnrolledCourses = allCourses.filter(course => !enrolledCourseIds.includes(course.id));
+
+                    // Get top 3 recommended courses (could implement more sophisticated recommendation logic)
+                    this.recommendedCourses = notEnrolledCourses
+                        .slice(0, 3)
+                        .map(course => ({
+                            id: course.id,
+                            title: course.title,
+                            description: course.description,
+                            price: 299.99 // Assuming price is not in the API response, using a default
+                        }));
                 } catch (error) {
                     console.error('Error fetching recommended courses:', error);
+                    // Fallback to mock data if API fails
+                    this.recommendedCourses = [
+                        { id: 4, title: 'CISSP Certification', description: 'Prepare for the industry-leading information security certification', price: 299.99 },
+                        { id: 5, title: 'OSCP Preparation', description: 'Hands-on penetration testing and ethical hacking skills', price: 349.99 },
+                        { id: 6, title: 'Cloud Security Specialist', description: 'Master security for AWS, Azure, and Google Cloud', price: 249.99 }
+                    ];
                 }
             },
             async fetchLearningPath() {

@@ -130,10 +130,14 @@
             <h2 class="text-3xl font-bold text-center mb-12">Top Cybersecurity Certifications</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8" x-data="{ courses: [] }" x-init="
-                    fetch('/api/v1/courses/')
-                        .then(response => response.json())
-                        .then(data => courses = data.slice(0, 3))
-                        .catch(error => console.error('Error fetching courses:', error))
+                    // Import API service
+                    import('/js/api.js').then(module => {
+                        const api = module.default;
+                        // Use API service to fetch courses with caching and retry
+                        api.getCourses()
+                            .then(data => courses = data.slice(0, 3))
+                            .catch(error => console.error('Error fetching courses:', error));
+                    })
                 ">
                 <!-- Course Card (Template) -->
                 <template x-for="course in courses" :key="course.id">
@@ -362,28 +366,36 @@
 
             async fetchUserData() {
                 try {
-                    const response = await fetch('/api/v1/users/me', {
-                        headers: {
-                            'Authorization': `Bearer ${this.token}`
-                        }
-                    });
-                    if (response.ok) {
-                        this.user = await response.json();
-                    } else {
-                        // Token might be invalid or expired
-                        this.logout();
-                    }
+                    // Import API service
+                    const module = await import('/js/api.js');
+                    const api = module.default;
+
+                    // Use API service to fetch user data with caching and retry
+                    this.user = await api.getCurrentUser();
                 } catch (error) {
                     console.error('Error fetching user data:', error);
+                    // Token might be invalid or expired
+                    this.logout();
                 }
             },
 
-            login(token, redirectTo = '/dashboard') {
-                this.token = token;
-                this.isLoggedIn = true;
-                localStorage.setItem('token', token);
-                this.fetchUserData();
-                window.location.href = redirectTo;
+            async login(email, password, redirectTo = '/dashboard') {
+                try {
+                    // Import API service
+                    const module = await import('/js/api.js');
+                    const api = module.default;
+
+                    // Use API service to login
+                    const data = await api.login(email, password);
+                    this.token = data.access_token;
+                    this.isLoggedIn = true;
+                    localStorage.setItem('token', this.token);
+                    await this.fetchUserData();
+                    window.location.href = redirectTo;
+                } catch (error) {
+                    console.error('Login failed:', error);
+                    throw error;
+                }
             },
 
             logout() {

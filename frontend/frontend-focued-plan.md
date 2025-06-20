@@ -112,8 +112,6 @@ Database: postgreSQL
 
 
 I want to build a front-end for already built backend of this application that will use the following defined endpoint apis:
-
-
 # User Management Endpoints:
 # POST /api/v1/users/register - Register a new user
 # POST /api/v1/users/login - User login

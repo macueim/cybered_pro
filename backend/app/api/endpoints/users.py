@@ -28,16 +28,25 @@ def register_user(
     user = user_service.create(db, obj_in=user_in)
     return user
 
+# backend/app/api/endpoints/users.py
 @router.post("/login", response_model=dict)
 def login(
         *,
         db: Session = Depends(get_db),
-        username: str,
-        password: str
+        login_data: dict  # Change this to accept a request body
 ) -> Any:
     """
     OAuth2 compatible token login, get an access token for future requests.
     """
+    username = login_data.get("username")
+    password = login_data.get("password")
+
+    if not username or not password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Username and password are required",
+        )
+
     user = user_service.authenticate(db, email=username, password=password)
     if not user:
         raise HTTPException(
@@ -53,7 +62,6 @@ def login(
         "access_token": user_service.create_access_token(user.id),
         "token_type": "bearer",
     }
-
 @router.get("/me", response_model=UserResponse)
 def read_user_me(
         current_user: User = Depends(get_current_active_user),
